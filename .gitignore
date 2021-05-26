@@ -20,6 +20,10 @@ parts/
 sdist/
 var/
 wheels/
+build/
+dist/
+tests/
+pytoqlik.egg-info/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
