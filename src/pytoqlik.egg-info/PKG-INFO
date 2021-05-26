@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: pytoqlik
-Version: 0.0.1
+Version: 0.0.4
 Summary: This lib allows you to integrate qlik with jupyter notebook.
 Home-page: https://github.com/bixtecnologia/pytoqlik
 Author: Angelo Baruffi Nogueira
@@ -15,7 +15,7 @@ Requires-Python: >=3.6
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
-# pytoqlik
+# pytoqlik (Building)
 
 This lib allows you to integrate qlik with jupyter notebook. You can:
 
@@ -27,5 +27,7 @@ Essa lib permite integrar o qlik junto do jupyter notebook. You can:
 1. Abrir um app dentro do jupyter
 2. Criar um app do qlik com os dados de um pandas dataframe
 3. Pegar os dados de um objeto do qlik e criar um pandas data frame
+
+<img src="toPy.gif" />
 
 

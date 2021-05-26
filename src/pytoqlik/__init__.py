@@ -1,5 +1,5 @@
 
 
-from pytoqlik import QSEngineAPI
-from pytoqlik import QSEngineAPIApp
-from pytoqlik import Pytoqlik
+from pytoqlik.module import QSEngineAPI
+from pytoqlik.module import QSEngineAPIApp
+from pytoqlik.module import Pytoqlik
