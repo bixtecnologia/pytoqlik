@@ -1,4 +1,4 @@
-# pytoqlik
+# pytoqlik (Building)
 
 This lib allows you to integrate qlik with jupyter notebook. You can:
 
