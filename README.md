@@ -13,12 +13,11 @@ Essa lib permite integrar o qlik junto do jupyter notebook. You can:
 
 <img src="toPy.gif" />
 
-> pip install pytoqlik
+```
+pip install pytoqlik
+from pytoqlik import pytoqlik
 
-> from pytoqlik import pytoqlik
-
-> p2q = Pytoqlik()
-
-> app = p2q.toQlik(df, embedded=True)
-
-> df_qlik = app.toPy('LFMcu')
+p2q = Pytoqlik()
+app = p2q.toQlik(df, embedded=True)
+df_qlik = app.toPy('LFMcu')
+```
