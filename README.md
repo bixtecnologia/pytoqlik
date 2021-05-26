@@ -10,3 +10,5 @@ Essa lib permite integrar o qlik junto do jupyter notebook. You can:
 1. Abrir um app dentro do jupyter
 2. Criar um app do qlik com os dados de um pandas dataframe
 3. Pegar os dados de um objeto do qlik e criar um pandas data frame
+
+<img src="toPy.gif" />
