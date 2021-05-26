@@ -15,7 +15,7 @@ Essa lib permite integrar o qlik junto do jupyter notebook. You can:
 
 ```
 pip install pytoqlik
-from pytoqlik import pytoqlik
+from pytoqlik import Pytoqlik
 
 p2q = Pytoqlik()
 app = p2q.toQlik(df, embedded=True)
