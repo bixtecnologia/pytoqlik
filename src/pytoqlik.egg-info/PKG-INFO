@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: pytoqlik
-Version: 0.0.4
+Version: 0.0.8
 Summary: This lib allows you to integrate qlik with jupyter notebook.
 Home-page: https://github.com/bixtecnologia/pytoqlik
 Author: Angelo Baruffi Nogueira

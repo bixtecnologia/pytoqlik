@@ -9,13 +9,17 @@ from IPython.display import IFrame
 from IPython.core.display import display, HTML
 from time import sleep
 
-
 class QSEngineAPI:
-    def __init__(self, host="ws://localhost:4848/app"):
+    def __init__(self, host="ws://localhost:4848/app", verbose=False):
         self.host = host
         self.ws = websocket.create_connection(host, sslopt={"cert_reqs": ssl.CERT_NONE})
         result = self.ws.recv()
-        print(f'Connect to {host}')
+        if(verbose):
+            print(f'Connect to {host}')
+
+    def reconect(self):
+        self.ws = websocket.create_connection(self.host, sslopt={"cert_reqs": ssl.CERT_NONE})
+        result = self.ws.recv()
 
     def send_request(self, request):
         self.ws.send(json.dumps(request))
@@ -70,24 +74,29 @@ class QSEngineAPI:
         return self.send_request(QSEngineAPI.GetDocListDic())
 
     def CreateApp(self, qAppName, replace):
+        is_new = 1
         result = self.send_request(QSEngineAPI.CreateAppDic(qAppName))
         if ('error' in result):
             if (result['error']['message'] == 'App already exists' and replace == True):
                 app_id = \
-                list(filter(lambda app: app['qTitle'] == 'PythonApp', self.GetDocList()['result']['qDocList']))[0][
+                list(filter(lambda app: app['qTitle'] == qAppName, self.GetDocList()['result']['qDocList']))[0][
                     'qDocId']
+                is_new = 0
             else:
                 raise Exception('Error: ' + result['error']['message'])
         else:
             app_id = result['result']['qAppId']
-        return app_id
+
+        return app_id, is_new
 
     def DeleteApp(self, qAppId):
         return self.send_request(QSEngineAPI.DeleteAppDic(qAppId))
 
-    def OpenDoc(self, qAppId):
+    def OpenDoc(self, qAppId, is_new):
         app_host = self.host + '/' + QSEngineAPI.AppIDtoURL(qAppId)
-        app = QSEngineAPIApp(host=app_host)
+        app = QSEngineAPIApp(host=app_host, verbose=False)
+        app.SetAppId(qAppId)
+        app.SetIsNew(is_new)
         result = app.send_request(QSEngineAPI.OpenDocDic(qAppId))
         return {
             'result': result,
@@ -205,6 +214,12 @@ class QSEngineAPIApp(QSEngineAPI):
             }
         }
 
+    def SetAppId(self, qAppId):
+        self.app_id = qAppId
+
+    def SetIsNew(self, is_new):
+        self.is_new = is_new
+
     def SetScript(self, qScript):
         return self.send_request(QSEngineAPIApp.SetScriptDic(qScript))
 
@@ -221,7 +236,6 @@ class QSEngineAPIApp(QSEngineAPI):
         result = self.GetObjects(['sheet'])  # Check if obj already exists
         while ('suspend' in result):  # Check if app is reloading
             result = self.GetObjects(['sheet'])
-            print(result)
         list_ob = list(filter(lambda obj: obj['qMeta']['title'] == name, result['result']['qList']))
         if (len(list_ob) > 0):
             self.sheet = list_ob[0]['qInfo']['qId']
@@ -245,6 +259,9 @@ class QSEngineAPIApp(QSEngineAPI):
 
     def GetObject(self, obj_id):
         result = self.send_request(QSEngineAPIApp.GetObjectDic(obj_id))
+        while ('change' in result):
+            print(result)
+            result = self.send_request(QSEngineAPIApp.GetObjectDic(obj_id))
         if (result['result']['qReturn']['qType'] is None):
             raise Exception(f'Object {obj_id} not exists')
         return result
@@ -256,6 +273,12 @@ class QSEngineAPIApp(QSEngineAPI):
         return self.send_request(QSEngineAPIApp.GetLayoutDic())
 
     def toPy(self, objectID, qWidth=10, qHeight=1000, return_json=False):
+
+        if(self.is_new):
+            self.reconect()
+            self.send_request(QSEngineAPI.OpenDocDic(self.app_id))
+            self.is_new = 0
+
         self.GetObject(objectID)
         result = self.GetHyperCubeData()
         if (return_json == True):
@@ -282,7 +305,6 @@ class QSEngineAPIApp(QSEngineAPI):
 class Pytoqlik():
     def __init__(self, host="ws://localhost:4848/app"):
         self.host = host
-        self.qs = QSEngineAPI(host)
 
     def toQlik(self, df,
                appName='PythonApp',
@@ -290,15 +312,20 @@ class Pytoqlik():
                redirect=False,
                embedded=True,
                replace=True,
-               verbose=True):
+               verbose=False,
+               width = 980,
+               height = 800,
+               decimal='.'
+               ):
+
+        self.qs = QSEngineAPI(self.host, verbose=verbose)
         qs = self.qs
+        app_id, is_new = qs.CreateApp(appName, replace)
 
-        app_id = qs.CreateApp(appName, replace)
-
-        result = qs.OpenDoc(app_id)
+        result = qs.OpenDoc(app_id,is_new)
         app = result['appConnection']
 
-        data = df.to_csv(sep=';', index=False, float_format=None)
+        data = df.to_csv(sep=';', index=False, decimal=decimal)
         script = f"""
         LOAD * INLINE [
         {data}
@@ -311,11 +338,12 @@ class Pytoqlik():
         app.DoReload()
         app.CreateObjectSheet(sheetName)
         url = app.GetUrlToSheet()
-        print(url)
+        if(verbose):
+            print('QLIK URL:', url)
         if (redirect):
             webbrowser.open(url)
         if (embedded):
-            display(IFrame(url, 980, 800))
+            display(IFrame(url, width, height))
 
         # qs.DeleteApp(app_id)
 
@@ -323,16 +351,17 @@ class Pytoqlik():
         # app.close()
         return app
 
-    def openQlik(self, appName='PythonApp', sheet=None,
+    def openApp(self, appName='PythonApp', sheet=None,
                  redirect=False,
                  embedded=True,
                  verbose=True):
 
+        self.qs = QSEngineAPI(self.host, verbose=verbose)
         qs = self.qs
 
-        app_id = qs.CreateApp(appName, True)
+        app_id = qs.CreateApp(appName, True)[0]
 
-        result = qs.OpenDoc(app_id)
+        result = qs.OpenDoc(app_id, 0)
         app = result['appConnection']
 
         url = app.GetUrlToApp()
