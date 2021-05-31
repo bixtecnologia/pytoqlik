@@ -21,7 +21,8 @@ sdist/
 var/
 wheels/
 tests/
-.idea/
+build/lib/pytoqlik/
+*idea/
 pytoqlik.egg-info/
 share/python-wheels/
 *.egg-info/
