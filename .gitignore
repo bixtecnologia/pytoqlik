@@ -22,7 +22,7 @@ var/
 wheels/
 tests/
 build/lib/pytoqlik/
-*idea/
+.idea/
 pytoqlik.egg-info/
 share/python-wheels/
 *.egg-info/
