@@ -20,9 +20,8 @@ parts/
 sdist/
 var/
 wheels/
-build/
-dist/
 tests/
+.idea/
 pytoqlik.egg-info/
 share/python-wheels/
 *.egg-info/
