@@ -1,29 +1,57 @@
-# pytoqlik
+![PTQ](https://i.imgur.com/0D4Qvkt.png)
 
-This lib allows you to integrate qlik with jupyter notebook. You can:
+# PyToQlik
 
-1. Open an app inside the jupyter
-2. Create a qlik app with data from a pandas dataframe
-3. Get data from a qlik object and create a pandas data frame
+PyToQlik is a library that allows you to integrate Qlik Desktop with Jupyter notebooks. With it you can:
 
-Essa lib permite integrar o qlik junto do jupyter notebook. You can:
-1. Abrir um app dentro do jupyter
-2. Criar um app do qlik com os dados de um pandas dataframe
-3. Pegar os dados de um objeto do qlik e criar um pandas data frame
+* Open and edit a Qlik app inside a Jupyter notebook;
+* Create a Qlik object with data from a pandas DataFrame data structure and/or;
+* Import data from a Qlik object and create a pandas DataFrame to work with in Python.
 
-<img src="toPy.gif" />
+## Getting Started
+
+For this library to work you must have a functioning Qlik Desktop App installed and running on your local machine. You will also need to have the *pandas* library and a Jupyter Notebook local server (read https://jupyter.readthedocs.io/en/latest/running.html).
 
 
-**Install**
+You can then download and install PyToQlik using:
+
+**Installation**
 ```
 pip install pytoqlik 
 ```
 
+## Usage
 
+### Example 1
+
+**Creating a Qlik app and feeding it data**
 ```
 from pytoqlik import Pytoqlik
+import seaborn
+
+df = seaborn.load_dataset('tips')  # df is just some example data provided by the seaborn library
 
 p2q = Pytoqlik()
-app = p2q.toQlik(df, embedded=True)
-df_qlik = app.toPy('LFMcu')
+app = p2q.toQlik(df)
 ```
+
+### Example 2
+
+**Importing data from a Qlik object to Python**
+```
+from pytoqlik import Pytoqlik
+import seaborn
+
+df = seaborn.load_dataset('tips')  # df is just some example data provided by the seaborn library
+
+p2q = Pytoqlik()
+app = p2q.toQlik(df)
+app.toPy('your ObjectID')
+```
+
+### Step by step guide
+<img src="tutorial.gif" />
+
+### Current limitations ###
+
+PyToQlik is currently implemented for QlikSense Desktop versions. Cloud and Enterprise versions of Qlik are still in active development.
