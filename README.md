@@ -2,7 +2,7 @@
 
 # PyToQlik
 
-PytoQlik is a library that allows you to integrate Qlik Desktop with Jupyter notebooks. With it you can:
+PyToQlik is a library that allows you to integrate Qlik Desktop with Jupyter notebooks. With it you can:
 
 * Open and edit a Qlik app inside a Jupyter notebook;
 * Create a Qlik object with data from a pandas DataFrame data structure and/or;
@@ -51,3 +51,7 @@ app.toPy('your ObjectID')
 
 ### Step by step guide
 <img src="tutorial.gif" />
+
+### Current limitations ###
+
+PyToQlik is currently implemented for QlikSense Desktop versions. Cloud and Enterprise versions of Qlik are still in active development.
