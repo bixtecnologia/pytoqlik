@@ -50,7 +50,7 @@ app.toPy('your ObjectID')
 ```
 
 ## Step by step guide
-<img src="tutorial.gif" />
+<img src="toPy.gif" />
 
 ---
 
