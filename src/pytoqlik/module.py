@@ -17,7 +17,7 @@ class QSEngineAPI:
         if(verbose):
             print(f'Connect to {host}')
 
-    def reconect(self):
+    def reconnect(self):
         self.ws = websocket.create_connection(self.host, sslopt={"cert_reqs": ssl.CERT_NONE})
         result = self.ws.recv()
 
@@ -83,7 +83,7 @@ class QSEngineAPI:
                     'qDocId']
                 is_new = 0
             else:
-                raise Exception('Error: ' + result['error']['message'])
+                raise Exception('Error: ' + result['error']['message'] + '. Either use replace=True or change the appName')
         else:
             app_id = result['result']['qAppId']
 
@@ -109,6 +109,17 @@ class QSEngineAPI:
 
 
 class QSEngineAPIApp(QSEngineAPI):
+    def DoSaveDic():
+        return {
+            "handle": 1,
+	        "method": "DoSave",
+	        "params": {
+		        "qFileName": ""
+	        },
+	        "outKey": -1,
+	        "id": randint(1, 10000000)
+        }
+
     def SetScriptDic(qScript):
         return {
             "handle": 1,
@@ -120,7 +131,7 @@ class QSEngineAPIApp(QSEngineAPI):
             "id": randint(1, 10000000)
         }
 
-    def CheckScriptSyntexDic():
+    def CheckScriptSyntaxDic():
         return {
             "handle": 1,
             "method": "CheckScriptSyntax",
@@ -151,7 +162,7 @@ class QSEngineAPIApp(QSEngineAPI):
                     },
                     "qMetaDef": {
                         "title": name,
-                        "description": "Created using python code"
+                        "description": "Created using PyToQlik."
                     },
                     "rank": 0,
                     "thumbnail": {
@@ -188,18 +199,18 @@ class QSEngineAPIApp(QSEngineAPI):
             }
         }
 
-    def GetLayoutDic():
+    def GetLayoutDic(handle):
         return {
-            "handle": 2,
+            "handle": handle,
             "method": "GetLayout",
             "params": {},
             "outKey": -1,
-            "id": 28
+            "id": randint(1, 10000000)
         }
 
-    def GetHyperCubeDataDic(qWidth, qHeight):
+    def GetHyperCubeDataDic(qWidth, qHeight, handle):
         return {
-            "handle": 2,
+            "handle": handle,
             "method": "GetHyperCubeData",
             "params": {
                 "qPath": "/qHyperCubeDef",
@@ -214,6 +225,9 @@ class QSEngineAPIApp(QSEngineAPI):
             }
         }
 
+    def DoSave(self):
+        return self.send_request(QSEngineAPIApp.DoSaveDic())
+
     def SetAppId(self, qAppId):
         self.app_id = qAppId
 
@@ -223,8 +237,8 @@ class QSEngineAPIApp(QSEngineAPI):
     def SetScript(self, qScript):
         return self.send_request(QSEngineAPIApp.SetScriptDic(qScript))
 
-    def CheckScriptSyntex(self):
-        return self.send_request(QSEngineAPIApp.CheckScriptSyntexDic())
+    def CheckScriptSyntax(self):
+        return self.send_request(QSEngineAPIApp.CheckScriptSyntaxDic())
 
     def DoReload(self):
         return self.send_request(QSEngineAPIApp.DoReloadDic())
@@ -259,38 +273,50 @@ class QSEngineAPIApp(QSEngineAPI):
 
     def GetObject(self, obj_id):
         result = self.send_request(QSEngineAPIApp.GetObjectDic(obj_id))
+        handle = result['result']['qReturn']['qHandle']
         while ('change' in result):
+            print('CHANGE: ')
             print(result)
             result = self.send_request(QSEngineAPIApp.GetObjectDic(obj_id))
         if (result['result']['qReturn']['qType'] is None):
-            raise Exception(f'Object {obj_id} not exists')
-        return result
+            raise Exception(f'Object {obj_id} does not exist. Typo? Maybe reopen app using openApp()?')
+        return result, handle
 
-    def GetHyperCubeData(self, qWidth=100, qHeight=100):
-        return self.send_request(QSEngineAPIApp.GetHyperCubeDataDic(qWidth, qHeight))
+    def GetHyperCubeData(self, handle, qWidth=100, qHeight=100):
+        return self.send_request(QSEngineAPIApp.GetHyperCubeDataDic(qWidth, qHeight, handle))
 
-    def GetLayout(self):
-        return self.send_request(QSEngineAPIApp.GetLayoutDic())
+    def GetLayout(self, handle):
+        return self.send_request(QSEngineAPIApp.GetLayoutDic(handle))
 
-    def toPy(self, objectID, qWidth=10, qHeight=1000, return_json=False):
 
-        if(self.is_new):
-            self.reconect()
-            self.send_request(QSEngineAPI.OpenDocDic(self.app_id))
-            self.is_new = 0
+    def toPy(self, objectID, qWidth=10, qHeight=1000, return_json=False, verbose=False):
+
+        if (qWidth*qHeight > 10000):
+            raise Exception("qWidth * qHeight must not exceed 10000.")
+
+        self.reconnect()
+        self.send_request(QSEngineAPI.OpenDocDic(self.app_id))
 
         self.GetObject(objectID)
-        result = self.GetHyperCubeData()
+        handle = self.GetObject(objectID)[1]  # GetObject now returns a tuple whose second element contains object handle
+        result = self.GetHyperCubeData(handle, qWidth, qHeight)
         if (return_json == True):
             return result
 
-        result2 = self.GetLayout()
+        result2 = self.GetLayout(handle)
+
+        if (verbose):
+            print('Object handle is ' + str(handle))
+            print('Layout output is ' + str(result2))
+
         columns = [x['qFallbackTitle'] for x in result2['result']['qLayout']['qHyperCube']['qDimensionInfo']] + [
             x['qFallbackTitle'] for x in result2['result']['qLayout']['qHyperCube']['qMeasureInfo']]
+
         if ('columnOrder' in result2['result']['qLayout']['qHyperCube']):
             columns = [columns[i] for i in result2['result']['qLayout']['qHyperCube']['columnOrder']]
 
         rows = []
+
         for row in result['result']['qDataPages'][0]['qMatrix']:
             elem = {}
             for index, col in enumerate(row):
@@ -299,23 +325,32 @@ class QSEngineAPIApp(QSEngineAPI):
 
         df = pd.DataFrame(rows)
         df.columns = columns
-        return df
+
+        if (df.empty):  # No measures in object
+            print(f'No data in {objectID} object. Is it empty?')
+            print('Shape (r,c): ' + str(df.shape))
+            return df
+           
+        else:
+            print('Shape (r,c): ' + str(df.shape))
+            return df
 
 
 class Pytoqlik():
     def __init__(self, host="ws://localhost:4848/app"):
         self.host = host
 
-    def toQlik(self, df,
+    def toQlik(self, *df,
                appName='PythonApp',
-               sheetName='Dashboard',
+               sheetName=None,
                redirect=False,
                embedded=True,
                replace=True,
-               verbose=False,
+               verbose=True,
                width = 980,
                height = 800,
-               decimal='.'
+               decimal='.',
+               separator=';' 
                ):
 
         self.qs = QSEngineAPI(self.host, verbose=verbose)
@@ -325,54 +360,124 @@ class Pytoqlik():
         result = qs.OpenDoc(app_id,is_new)
         app = result['appConnection']
 
-        data = df.to_csv(sep=';', index=False, decimal=decimal)
-        script = f"""
-        LOAD * INLINE [
-        {data}
-            ](delimiter is ';');
-        """
-        app.SetScript(script)
-        result = app.CheckScriptSyntex()['result']['qErrors']
+        compositeScript = ''
+        for dataframe in df:
+            data = dataframe.to_csv(sep=separator, index=False, decimal=decimal)
+            currentScript = f"""
+LOAD * INLINE\n[
+{data}\n]
+    (delimiter is '{separator}');
+"""
+            compositeScript = compositeScript + currentScript
+
+        app.SetScript(compositeScript)
+        result = app.CheckScriptSyntax()['result']['qErrors']
         if (len(result) > 0):
-            raise Exception('Script Syntex Error: ' + str(result))
+            raise Exception('Script Syntax Error: ' + str(result))
         app.DoReload()
-        app.CreateObjectSheet(sheetName)
-        url = app.GetUrlToSheet()
+
+        if (sheetName) is not None:
+            app.CreateObjectSheet(sheetName)
+            url = app.GetUrlToSheet()
+        else:
+            if (verbose):
+                print('No sheetName provided. Opening app home screen...')
+                url = app.GetUrlToApp()
+
         if(verbose):
-            print('QLIK URL:', url)
+            print('Current Qlik URL: ', url)
         if (redirect):
             webbrowser.open(url)
         if (embedded):
             display(IFrame(url, width, height))
 
-        # qs.DeleteApp(app_id)
-
         qs.close()
-        # app.close()
         return app
-
-    def openApp(self, appName='PythonApp', sheet=None,
-                 redirect=False,
-                 embedded=True,
-                 verbose=True):
+       
+    def openApp(self, appName='PythonApp', 
+                sheetName=None,
+                redirect=False,
+                embedded=True,
+                width=980,
+                height=800,
+                verbose=True):
 
         self.qs = QSEngineAPI(self.host, verbose=verbose)
         qs = self.qs
 
-        app_id = qs.CreateApp(appName, True)[0]
-
+        app_id, is_new = qs.CreateApp(appName, True)
         result = qs.OpenDoc(app_id, 0)
         app = result['appConnection']
+        if (sheetName) is not (None):
+            app.CreateObjectSheet(sheetName)
+            
+        if (is_new):
+            print(f'No app named {appName} found. Creating new Qlik Application...')
 
-        url = app.GetUrlToApp()
-        print(url)
+        if (sheetName) is not None:
+            app.CreateObjectSheet(sheetName)
+            url = app.GetUrlToSheet()
+        else:
+            if (verbose):
+                print('No sheetName provided. Opening app home screen...')
+            url = app.GetUrlToApp()
+
+        if (verbose):
+            print('Current Qlik URL: ' + url)
         if (redirect):
             webbrowser.open(url)
         if (embedded):
-            display(IFrame(url, 980, 800))
-
-        # qs.DeleteApp(app_id)
+            display(IFrame(url, width, height))
 
         qs.close()
-        # app.close()
         return app
+
+    def listApps(self):
+
+        self.qs = QSEngineAPI(self.host)
+        qs=self.qs
+
+        appListRaw = str(qs.GetDocList())
+        
+        def find_all(string, substring):
+            start = 0
+            while True:
+                start = string.find(substring, start)
+                if start == -1: 
+                    return
+                yield start
+                start += len(substring)
+
+        indexes = list(find_all(appListRaw, 'qTitle'))
+        appNames = []
+        for _ in indexes:
+            name = appListRaw[_+10:]  # 10 is the offset from qTitle to beginning of name
+            name = name.rsplit("'")[0]  # rsplit up to next single '
+            appNames.append(name)
+
+        indexes = list(find_all(appListRaw, 'qDocId'))
+        appLocations = []
+        for _ in indexes:
+            loc = appListRaw[_+10:]  # 10 is the offset from qDocId to beginning of path
+            loc = loc.rsplit("'")[0]  # rsplit up to next single '
+            loc = loc.replace('\\\\', '\\') # Replace double backslash with singles. Python requires two backslashes to represent one
+            appLocations.append(loc)
+
+        indexes = list(find_all(appListRaw, 'qFileSize'))
+        appSizes = []
+        for _ in indexes:
+            size = appListRaw[_+12:]  # 12 is the offset from qFileSize to beginning of size
+            size = size.rsplit(",")[0]  # rsplit up to next  ,
+            size = round(int(size)/1000, 2)
+            size = str(size) + ' kB'
+            appSizes.append(size)
+
+        tempList = []
+        for _ in range(appListRaw.count('qTitle')):
+            tempList.append([appNames[_], appLocations[_], appSizes[_]])
+    
+        appList = pd.DataFrame(tempList, columns = ['App Name', 'App Location', 'File Size'])
+        pd.set_option('max_colwidth', 100)
+        return appList
+
+

@@ -49,9 +49,28 @@ app = p2q.toQlik(df)
 app.toPy('your ObjectID')
 ```
 
-### Step by step guide
-<img src="tutorial.gif" />
+## Step by step guide
+<img src="toPy.gif" />
 
-### Current limitations ###
+---
+
+### Current limitations
 
 PyToQlik is currently implemented for QlikSense Desktop versions. Cloud and Enterprise versions of Qlik are still in active development.
+
+---
+
+### Features in development
+
+#### Connectivity
+- Qlik Enterprise support
+- Qlik Cloud support
+
+#### Functionality
+- Data fetching based on dimensions and measures
+- More robust embedding objects and sheets
+- More robust script editing
+- Object creation and manipulation via Python
+- Auxiliary functions, app listing and object listing
+- Task creation and managing
+- ETL features in Python
