@@ -39,7 +39,7 @@ Pytoqlik().toQlik(*df, appName='PythonApp', sheetName='Dashboard', redirect=Fals
 ### Argument breakdown:
 - **df**: pandas DataFrame. This data structure will be converted to a .csv file and added to desired Qlik application. This is a required argument, and you can pass multiple DataFrames in a single call of toQlik().
 - **appName**: string. The data will be loaded to the Qlik application with this name. If no existing applications match the name, a new one will be created. Default: 'PythonApp'.
-- **sheetName**: string. The command automatically creates a new sheet inside de application for you to work on, whose name can be set in this argument. Default: 'Dashboard'.
+- **sheetName**: string. The command automatically creates a new sheet inside the application for you to work on, whose name can be set in this argument. Default: 'Dashboard'.
 - **redirect**: boolean. When set to True, executing the toQlik() method will open the Qlik application in your web browser. Default: False.
 - **embedded**: boolean. When set to False, toQlik() will not display the embedded Qlik editor in your Jupyter Notebook. Useful if using redirect. Default: True.
 - **replace**: If replace is set to False, trying to use toQlik() in an application that already exists returns an error. If set to True, calling toQlik() to an application that already exists replaces it with the new data. Default: True.
