@@ -1,4 +1,14 @@
-# Pytoqlik()
+# PyToQlik Documentation
+## Table of Contents
+
+- [Pytoqlik](#pytoqlik)
+- [toQlik](#toqlik)
+- [toPy](#topy)
+- [openApp](#openapp)
+- [listApps](#listapps)
+
+
+# Pytoqlik
 Pytoqlik() instatiates a Python and Qlik connection and allows usage of the methods below to manipulate, import/export data and effectively control Qlik applications using Python. 
 
 ### Usage:
@@ -16,7 +26,7 @@ p2q = pytoqlik.Pytoqlik()
 ```
 
 ------------------------------------------------------------------------------------------
-# toQlik()
+# toQlik
 toQlik() is a method called on a Pytoqlik object previously created. (Using Data Load Editor!) It is used to create a new Qlik application using pandas DataFrames as data sources, or to append pandas DataFrames to an existing Qlik application by setting the appName and/or sheetName. Running toQlik() on an existing app will overwrite the scripts being run in it. 
 
 The data is loaded using Qlik's Data Load Editor, and as such, you might want to synchronize the scripted tables inside Qlik once you load your pandas DataFrame.
@@ -53,7 +63,7 @@ p2q.toQlik(data1, data2, appName='MyQlikApplication')
 ```
 
 ------------------------------------------------------------------------------------------
-# toPy()
+# toPy
 toPy() converts a Qlik objectID to a pandas DataFrame. You can fetch the Qlik objectID by right-clicking the object in view mode > share > embed. Then copy the objectID and use it as a string parameter in toPy(). Currently works for bar charts, combo charts, line charts, bullet charts, pie charts, treemap charts, gauges, KPIs, text.
 
 toPy() returns an empty DataFrame if the object has no dimensions and measures. 
@@ -89,7 +99,7 @@ app.toPy('aaWTm')
 ```
 
 ------------------------------------------------------------------------------------------
-# openApp()
+# openApp
 openApp() is a method called on a Pytoqlik object previously created. This method is used to open and display a Qlik Application inside your Jupyter Notebook or redirect you to it in your web browser.
 If there are no Qlik Applications with the name you input, this method will create a new Qlik Application with the specified name and warn you about it.
 
@@ -116,7 +126,7 @@ p2q.openApp(appName='MyQlikApplication', redirect=True, embedded=False)
 ```
 
 ------------------------------------------------------------------------------------------
-# listApps()
+# listApps
 listApps() is a method called on a Pytoqlik object previously created. This method is used to list and display all Qlik Applications currently saved in QlikSense's directory. It returns a pandas DataFrame containing the application name, it's path and file size.
 
 ### Usage:
