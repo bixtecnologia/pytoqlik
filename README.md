@@ -54,6 +54,12 @@ app.toPy('your ObjectID')
 
 ---
 
+### Documentation
+
+Current documentation can be found [here](docs/documentation.md).
+
+---
+
 ### Current limitations
 
 PyToQlik is currently implemented for QlikSense Desktop versions. Cloud and Enterprise versions of Qlik are still in active development.
