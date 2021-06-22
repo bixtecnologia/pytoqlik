@@ -1,4 +1,5 @@
 import websocket
+import requests
 import ssl
 import json
 from random import randint
@@ -288,7 +289,6 @@ class QSEngineAPIApp(QSEngineAPI):
     def GetLayout(self, handle):
         return self.send_request(QSEngineAPIApp.GetLayoutDic(handle))
 
-
     def toPy(self, objectID, qWidth=10, qHeight=1000, return_json=False, verbose=False):
 
         if (qWidth*qHeight > 10000):
@@ -335,10 +335,189 @@ class QSEngineAPIApp(QSEngineAPI):
             print('Shape (r,c): ' + str(df.shape))
             return df
 
-
 class Pytoqlik():
-    def __init__(self, host="ws://localhost:4848/app"):
+    ### INIT FUNCTION ###
+    def __init__(self, host="ws://localhost:4848/app", api_key='', tenant='', appId='', verbose=True):
         self.host = host
+        self.tenant = tenant.replace('https://', 'wss://')
+        self.auth_header = {'Authorization': 'Bearer ' + api_key}
+        self.CloudId = appId
+        self.CloudTenant = tenant
+
+        if (self.tenant != 'https://') and (self.auth_header != {'Authorization': 'Bearer '}):
+            self.isCloud = True
+            if (verbose):
+                print('Successfully pointed to Qlik Cloud at: ' + str(self.tenant) + ' with API key: ' + str(api_key))
+        else:
+            self.isCloud = False
+            if (verbose):
+                print('Successfully pointed to Qlik Desktop at: ' + str(self.host))
+
+        if (self.isCloud):
+            self.ws = websocket.WebSocket()
+            self.ws.connect(self.tenant + '/app/' + appId, header=self.auth_header, origin=tenant)
+            print(self.ws.recv())
+
+    ### GETTERS AND SETTERS FOR CLOUD ###
+    def getActiveApp(self):
+        if (self.isCloud):
+            self.ws.send(json.dumps({
+            "jsonrpc": "2.0",
+            "id": randint(1,1000000),
+            "method": "GetActiveDoc",
+            "handle": -1,
+            "params": []
+            }))
+            result = self.ws.recv()
+            return result
+            
+    def createCloudApp(self, appName='PythonAppCloud', verbose=True):
+        if (self.isCloud):
+            self.ws.send(json.dumps({
+            "jsonrpc": "2.0",
+            "id": 6,
+            "handle": -1,
+            "method": "CreateApp",
+            "params": {
+                "qAppName": appName,
+                "qLocalizedScriptMainSection": "value",
+                "qLocale": "value"
+                }
+            }))
+        result = json.loads(self.ws.recv())
+        if (verbose) and result['result']['qSuccess'] == True:
+            print(f'Successfully created app {appName} with ID: {result["result"]["qAppId"]}')
+        return result
+
+    def setCloudScript(self, handle=1, script='', verbose=False):
+        if (self.isCloud):
+            self.ws.send(json.dumps({
+            "handle": handle,
+            "method": "SetScript",
+            "params": {
+                "qScript": script
+            },
+            "outKey": -1,
+            "id": randint(1,1000000)
+        }))
+        result = json.loads(self.ws.recv())
+        if (verbose) and result['change'][0] == 1:
+            print('Script set successfully')
+        return result
+
+    def reloadCloudApp(self, handle=1, verbose=False):
+        if (self.isCloud):
+            self.ws.send(json.dumps({
+            "handle": handle,
+            "method": "DoReload",
+            "params": {
+                "qMode": 0,
+                "qPartial": False,
+                "qDebug": False
+            },
+            "outKey": -1,
+            "id": randint(1,1000000)
+        }))
+        result = json.loads(self.ws.recv())
+        if (verbose) and result['change'][0] == 1:
+            print('Script reloaded successfully')
+        return result
+
+    def saveCloudApp(self, handle=1, verbose=False):
+        if (self.isCloud):
+            self.ws.send(json.dumps({
+            "handle": handle,
+            "method": "DoSave",
+            "params": {
+                "qFileName": ""
+            },
+            "outKey": -1,
+            "id": randint(1,1000000)
+        }))
+        result = json.loads(self.ws.recv())
+        if (verbose) and result['change'][0] == 1:
+            print('Script saved successfully')
+        return result
+        
+    def getObject(self, objId, verbose=False):
+        if (self.isCloud):
+            self.ws.send(json.dumps({
+            "handle": 1,
+            "method": "GetObject",
+            "params": {
+                "qId": objId
+            }
+        }))
+        result = json.loads(self.ws.recv())
+        return result
+
+    def getHCData(self, handle, qWidth=10, qHeight=1000):
+        if (self.isCloud):
+            self.ws.send(json.dumps({
+            "handle": handle,
+            "method": "GetHyperCubeData",
+            "params": {
+                "qPath": "/qHyperCubeDef",
+                "qPages": [
+                    {
+                        "qLeft": 0,
+                        "qTop": 0,
+                        "qWidth": qWidth,
+                        "qHeight": qHeight
+                    }
+                ]
+            }
+        }))
+        result = json.loads(self.ws.recv())
+        return result
+
+    def getCloudLayout(self, handle=1, verbose=False):
+        if (self.isCloud):
+            self.ws.send(json.dumps({
+            "jsonrpc": "2.0",
+            "id": randint(1,100000),
+            "handle": handle,
+            "method": "GetLayout",
+            "params": {}
+            }))
+        result = json.loads(self.ws.recv())
+        return result
+
+    def cloudReconnect(self):
+        self.ws.connect(self.tenant + '/app/' + self.CloudId, header=self.auth_header, origin=self.CloudTenant)
+        result = self.ws.recv()
+
+    ### FUNCTIONALITY ###
+    def toPy(self, objId):
+        if (self.isCloud):
+            self.cloudReconnect()
+            self.getActiveApp()
+            handle = self.getObject(objId)['result']['qReturn']['qHandle']
+            result = self.getHCData(handle)
+            result2 = self.getCloudLayout(handle)
+
+            columns = [x['qFallbackTitle'] for x in result2['result']['qLayout']['qHyperCube']['qDimensionInfo']] + [x['qFallbackTitle'] for x in result2['result']['qLayout']['qHyperCube']['qMeasureInfo']]
+            if ('columnOrder' in result2['result']['qLayout']['qHyperCube']):
+                columns = [columns[i] for i in result2['result']['qLayout']['qHyperCube']['columnOrder']]
+
+            rows = []
+            for row in result['result']['qDataPages'][0]['qMatrix']:
+                elem = {}
+                for index, col in enumerate(row):
+                    elem[f'{index}'] = col['qNum'] if (col['qNum'] != 'NaN') else col['qText']
+                rows.append(elem)
+
+            df = pd.DataFrame(rows)
+            df.columns = columns
+
+            if (df.empty):  # No measures in object
+                print(f'No data in {objId} object. Is it empty?')
+                print('Shape (r,c): ' + str(df.shape))
+                return df
+           
+            else:
+                print('Shape (r,c): ' + str(df.shape))
+                return df
 
     def toQlik(self, *df,
                appName='PythonApp',
@@ -350,50 +529,80 @@ class Pytoqlik():
                width = 980,
                height = 800,
                decimal='.',
-               separator=';' 
-               ):
+               separator=';',
+               warning=True):
 
-        self.qs = QSEngineAPI(self.host, verbose=verbose)
-        qs = self.qs
-        app_id, is_new = qs.CreateApp(appName, replace)
+        if (self.isCloud):
+            compositeScript = ''
+            for dataframe in df:
+                data = dataframe.to_csv(sep=separator, index=False, decimal=decimal)
+                currentScript = f"""
+                LOAD * INLINE\n[
+                {data}\n]
+                (delimiter is '{separator}');
+                """
+                compositeScript = compositeScript + currentScript
 
-        result = qs.OpenDoc(app_id,is_new)
-        app = result['appConnection']
-
-        compositeScript = ''
-        for dataframe in df:
-            data = dataframe.to_csv(sep=separator, index=False, decimal=decimal)
-            currentScript = f"""
-LOAD * INLINE\n[
-{data}\n]
-    (delimiter is '{separator}');
-"""
-            compositeScript = compositeScript + currentScript
-
-        app.SetScript(compositeScript)
-        result = app.CheckScriptSyntax()['result']['qErrors']
-        if (len(result) > 0):
-            raise Exception('Script Syntax Error: ' + str(result))
-        app.DoReload()
-
-        if (sheetName) is not None:
-            app.CreateObjectSheet(sheetName)
-            url = app.GetUrlToSheet()
+            self.getActiveApp()
+            if (warning):
+                ans = input('This will replace your current data scripts in the app. Are you sure you want to proceed? (Y/N)\n')
+                if ans == 'y' or ans == 'Y':
+                    self.setCloudScript(script=compositeScript)
+                    self.reloadCloudApp()
+                else:
+                    print('Operation aborted')
+            else:
+                self.setCloudScript(script=compositeScript)
+                self.saveCloudApp()
+                self.reloadCloudApp()
+            
         else:
-            if (verbose):
-                print('No sheetName provided. Opening app home screen...')
-                url = app.GetUrlToApp()
+            print(self.host)
+            self.qs = QSEngineAPI(self.host, verbose=verbose)
+            qs = self.qs
+            app_id, is_new = qs.CreateApp(appName, replace)
 
-        if(verbose):
-            print('Current Qlik URL: ', url)
-        if (redirect):
-            webbrowser.open(url)
-        if (embedded):
-            display(IFrame(url, width, height))
+            result = qs.OpenDoc(app_id,is_new)
+            app = result['appConnection']
 
-        qs.close()
-        return app
-       
+            compositeScript = ''
+            for dataframe in df:
+                data = dataframe.to_csv(sep=separator, index=False, decimal=decimal)
+                currentScript = f"""
+                LOAD * INLINE\n[
+                {data}\n]
+                (delimiter is '{separator}');
+                """
+
+                compositeScript = compositeScript + currentScript
+
+            app.SetScript(compositeScript)
+            result = app.CheckScriptSyntax()['result']['qErrors']
+            if (len(result) > 0):
+                raise Exception('Script Syntax Error: ' + str(result))
+            app.DoReload()
+
+            if (sheetName) is not None:
+                app.CreateObjectSheet(sheetName)
+                url = app.GetUrlToSheet()
+            else:
+                if (verbose):
+                    print('No sheetName provided. Opening app home screen...')
+                    url = app.GetUrlToApp()
+
+            if(verbose):
+                print('Current Qlik URL: ', url)
+            if (redirect):
+                webbrowser.open(url)
+            if (embedded):
+                display(IFrame(url, width, height))
+
+            qs.close()
+            return app
+
+        s = requests.Session()
+        s.headers.update(self.auth_header)
+
     def openApp(self, appName='PythonApp', 
                 sheetName=None,
                 redirect=False,
@@ -401,83 +610,100 @@ LOAD * INLINE\n[
                 width=980,
                 height=800,
                 verbose=True):
+        """Opens specified Qlik app. Cloud versions can only access apps that the user's API key can access. Desktop version accesses all apps inside Qlik's folder"""
 
-        self.qs = QSEngineAPI(self.host, verbose=verbose)
-        qs = self.qs
+        if (self.isCloud):
+            print('Connecting to Qlik Cloud...')
+            self.ws.send(json.dumps(
+            {
+                "handle": -1,
+                "method": "OpenDoc",
+                "params": {
+                    "qDocName": appName,
+                    "qUserName": "",
+                    "qPassword": "",
+                    "qSerial": "",
+                    "qNoData": False
+                }
+            }))
+            result = self.ws.recv()
+            result = json.loads(result)
+            if result['error']['code'] == 1002:
+                print(f'App {self.id} is already open. Please instatiate a new Pytoqlik() object if you want to change apps')
 
-        app_id, is_new = qs.CreateApp(appName, True)
-        result = qs.OpenDoc(app_id, 0)
-        app = result['appConnection']
-        if (sheetName) is not (None):
-            app.CreateObjectSheet(sheetName)
-            
-        if (is_new):
-            print(f'No app named {appName} found. Creating new Qlik Application...')
-
-        if (sheetName) is not None:
-            app.CreateObjectSheet(sheetName)
-            url = app.GetUrlToSheet()
         else:
+            self.qs = QSEngineAPI(self.host, verbose=verbose)
+            qs = self.qs
+
+            app_id, is_new = qs.CreateApp(appName, True)
+            result = qs.OpenDoc(app_id, 0)
+            app = result['appConnection']
+            if (sheetName) is not (None):
+                app.CreateObjectSheet(sheetName)
+                
+            if (is_new):
+                print(f'No app named {appName} found. Creating new Qlik Application...')
+
+            if (sheetName) is not None:
+                app.CreateObjectSheet(sheetName)
+                url = app.GetUrlToSheet()
+            else:
+                if (verbose):
+                    print('No sheetName provided. Opening app home screen...')
+                url = app.GetUrlToApp()
+
             if (verbose):
-                print('No sheetName provided. Opening app home screen...')
-            url = app.GetUrlToApp()
+                print('Current Qlik URL: ' + url)
+            if (redirect):
+                webbrowser.open(url)
+            if (embedded):
+                display(IFrame(url, width, height))
 
-        if (verbose):
-            print('Current Qlik URL: ' + url)
-        if (redirect):
-            webbrowser.open(url)
-        if (embedded):
-            display(IFrame(url, width, height))
+            qs.close()
+            return app
 
-        qs.close()
-        return app
+    def listApps(self, verbose=False, return_json=False):
+        """Returns a pandas DataFrame containing information about all Qlik Apps in host. KNOWN ISSUES: returns weird results, depending on which app Pytoqlik is referring to. Doesnt return all apps"""          
 
-    def listApps(self):
+        if (self.isCloud):
+            self.ws.send(json.dumps({
+	            "handle": -1,
+	            "method": "GetDocList",
+	            "params": {},
+	            "outKey": -1,
+	            "id": randint(1,1000000)
+                }))
+            result = self.ws.recv()
+            result = json.loads(result)
+            sizeOf = len(result['result']['qDocList'])
+            for i in range(sizeOf):
+                print(result['result']['qDocList'][i]['qDocName'])
 
-        self.qs = QSEngineAPI(self.host)
-        qs=self.qs
+            tempList = []
+            if 'result' in result:
+                totalLen = len(result['result']['qDocList'])
+                for i in range(totalLen):
+                    tempList.append([result['result']['qDocList'][i]['qDocName'], result['result']['qDocList'][i]['qDocId'], str(result['result']['qDocList'][i]['qFileSize']/1024) + ' kB'])
 
-        appListRaw = str(qs.GetDocList())
-        
-        def find_all(string, substring):
-            start = 0
-            while True:
-                start = string.find(substring, start)
-                if start == -1: 
-                    return
-                yield start
-                start += len(substring)
+            appList = pd.DataFrame(tempList, columns = ['App Name', 'App Location', 'File Size'])
+            pd.set_option('max_colwidth', 100)
+            return appList
 
-        indexes = list(find_all(appListRaw, 'qTitle'))
-        appNames = []
-        for _ in indexes:
-            name = appListRaw[_+10:]  # 10 is the offset from qTitle to beginning of name
-            name = name.rsplit("'")[0]  # rsplit up to next single '
-            appNames.append(name)
+        else:
+            self.qs = QSEngineAPI(self.host)
+            qs=self.qs
 
-        indexes = list(find_all(appListRaw, 'qDocId'))
-        appLocations = []
-        for _ in indexes:
-            loc = appListRaw[_+10:]  # 10 is the offset from qDocId to beginning of path
-            loc = loc.rsplit("'")[0]  # rsplit up to next single '
-            loc = loc.replace('\\\\', '\\') # Replace double backslash with singles. Python requires two backslashes to represent one
-            appLocations.append(loc)
+            result = qs.GetDocList()
+            tempList = []
 
-        indexes = list(find_all(appListRaw, 'qFileSize'))
-        appSizes = []
-        for _ in indexes:
-            size = appListRaw[_+12:]  # 12 is the offset from qFileSize to beginning of size
-            size = size.rsplit(",")[0]  # rsplit up to next  ,
-            size = round(int(size)/1000, 2)
-            size = str(size) + ' kB'
-            appSizes.append(size)
+            if (return_json):
+                print(result)
 
-        tempList = []
-        for _ in range(appListRaw.count('qTitle')):
-            tempList.append([appNames[_], appLocations[_], appSizes[_]])
-    
-        appList = pd.DataFrame(tempList, columns = ['App Name', 'App Location', 'File Size'])
-        pd.set_option('max_colwidth', 100)
-        return appList
+            if 'result' in result:
+                totalLen = len(result['result']['qDocList'])
+                for i in range(totalLen):
+                    tempList.append([result['result']['qDocList'][i]['qDocName'], result['result']['qDocList'][i]['qDocId'], str(result['result']['qDocList'][i]['qFileSize']/1024) + ' kB'])
 
-
+            appList = pd.DataFrame(tempList, columns = ['App Name', 'App Location', 'File Size'])
+            pd.set_option('max_colwidth', 100)
+            return appList
