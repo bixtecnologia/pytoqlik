@@ -56,7 +56,7 @@ app.toPy('your ObjectID')
 
 ### Documentation
 
-PyToQlik current documentation can be found [HERE](https://github.com/BeautyFades/pytoqlik/blob/main/PyToQlik%20Documentation.md).
+PyToQlik current documentation can be found [HERE](docs/documentation.md).
 
 ---
 
