@@ -83,7 +83,9 @@ data = seaborn.load_dataset('flights')
 data
 ```
 This returns a pandas DataFrame containing 144 rows and 3 columns of sample data. We have flight information containing flight year, month and the number of passengers. 
+
 ![pandas raw data](https://github.com/BeautyFades/pytoqlik/blob/BeautyFades-sprint-wk3/docs/images/datapreview.png)
+
 Let's get this information to our application using **toQlik()**. The fourth cell is:
 ```python
 p2q.toQlik(data)
