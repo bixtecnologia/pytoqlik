@@ -93,6 +93,7 @@ p2q.toQlik(data)
 Note that we called **toQlik()** in our connection object, since that object already has all the information about authentication, which tenant and which app it should modify. However, this method currently replaces all the data inside the **Data load editor** of the application. So, there running this cell should prompt us with a warning telling us exactly that, and awaits a Y/N confirmation. This behavior can be toggled on and off by passing the optional argument *warning=False* when calling **toQlik()**. If we either do that or just answer with a "y", the data should be imported into the application and we can start building visualizations with it! Let's check on the Data load editor page:
 
 ![Data Load Editor](https://github.com/BeautyFades/pytoqlik/blob/BeautyFades-sprint-wk3/docs/images/importeddata.png)
+
 Looks like our data got passed as a .csv file, separated by semicolons (;), and headers were fetched for us already. If you check the documentation, there are also some other customizable settings like changing the separator character, or the decimal separator, and you can also pass multiple DataFrame objects in a single call of **toQlik()** (they will all be loaded one after the other automatically).
 
 ## Some manual work: creating an example chart
@@ -100,6 +101,7 @@ So we now have an application with data in it. Let's go ahead and create a visua
 
 Let's open our application in the browser normally and build the pie chart displaying the total number of passengers per year. Our dimension is "*year*", and as a measure we will add "*Sum(passengers)*", like shown below:
 ![Pie chart creation](https://github.com/BeautyFades/pytoqlik/blob/BeautyFades-sprint-wk3/docs/images/creatingpiechart.png)
+
 Let's also change the measure and dimension labels so our data is a little prettier. We are changing the pie chart's limitation value to 20 so there's not an "Others" dimension with the rest of the data condensed into it. The completed pie chart looks like the one in the image below.
 
 ![Completed pie chart](https://github.com/BeautyFades/pytoqlik/blob/BeautyFades-sprint-wk3/docs/images/piechart.png)
@@ -118,6 +120,7 @@ Finally, with the Object ID in hands, all it takes is a single call to **toPy()*
 p2q.toPy('qCZbkW')
 ```
 Which returns, for the data we provided, a DataFrame containing every year, and the sum of passengers in that year:
+
 ![resulting data](https://github.com/BeautyFades/pytoqlik/blob/BeautyFades-sprint-wk3/docs/images/outputdata.png)
 
 We can always assign this DataFrame to a variable to save it, and then perform as many operations as we want with it. If you are a data scientist in Python, *pandas* is most likely your best friend, and the possibilities and analysis you can now perform is much, much higher. You can extract and input all kinds of data in machine learning algorithms, you can format and reformat structures, save them in a variable and input them back into the application by using **toQlik()** once again, you can perform regressions, trend predictions, etc... all using other Python libraries.
