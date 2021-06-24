@@ -3,15 +3,15 @@ Hello! This tutorial is a short introduction to some functionalities the PyToQli
 
 
 # Table of Contents
-1. [Installation](#installation)
-2. [Qlik Cloud SaaS Tutorial](#qlik-cloud-saas-tutorial)
-	2.1. [Importing what we will need](#importing-what-we-will-need)
-	2.2. [Generating an API Key](#generating-an-api-key)
-	2.3. [Creating the connection to a Qlik application](#creating-the-connection-to-a-qlik-application)
-	2.4. [Inputting data into the application](#inputting-data-into-the-application)
-	2.5. [Some manual work: creating an example chart](#some-manual-work-creating-an-example-chart)
-	2.6. [Extrating data from an object](#extracting-data-from-an-object)
-3. [Closing thoughts](#closing-thoughts)
+- [Installation](#installation)
+- [Qlik Cloud SaaS Tutorial](#qlik-cloud-saas-tutorial)
+	- [Importing what we will need](#importing-what-we-will-need)
+	- [Generating an API Key](#generating-an-api-key)
+	- [Creating the connection to a Qlik application](#creating-the-connection-to-a-qlik-application)
+	- [Inputting data into the application](#inputting-data-into-the-application)
+	- [Some manual work: creating an example chart](#some-manual-work-creating-an-example-chart)
+	- [Extrating data from an object](#extracting-data-from-an-object)
+- [Closing thoughts](#closing-thoughts)
 
 
 
@@ -41,11 +41,11 @@ import pandas as pd   # We will need pandas to manipulate the extracted DataFram
 Assuming you followed their step-by-step, that your tenant has already enabled API Keys, and also that you already have the **developer** role in your tenant, as per shown on the link above, we will proceed here by showing you how to create an API Key and input it to PyToQlik.
 
 Go to your **profile settings** window, and under **Management** go to the **API Keys** section. If you have the **developer** role, a **generate new key** button will appear on the top-right corner. Clicking it will open a a window that allows you to input a Key description and an expiration period, as shown below:
-![enter image description here](https://lh3.googleusercontent.com/HXIyxUDWi0vcmbzPC4FSpEzUcMwpU6VXNdTqoY_cItx4GuzkKb0h6HD_LjYVhoo4OvpifrclDw6KJaF6gujnM6ohyVUPtKdFHnS8mkg9qspIM0FAfHpkqz2Gesax7ENppSKHEkQnV60fLvCalHh8E4yWUC94TL2mNNmqqYmq4cDAAfhENY_0v6B7207V5W-coHq-re_2lWR55Xgr8xbwhhLMvxQaAwTcAL3BA2jRSSgKhaSmc_VquoxZFlSfhyNwSD7tFkXYMimW9JeY6Mw9jTzp6qiPCXplF6gH97a7A2nSeiS7mP7GHPmUoum8yiSjUnDK65P-Gn8jJ7ISPCbmq_bE0lWyU74Ink0AdAD4LF4mjFORXqOc37EpvsMzdqXH7djCY6_V1Skna9pn7YmPNC_0W5BwtyHU2tK3Tku7wJfv4Mwo1Sa-XTs2WYv_VmO7SV6R_n-xihpWj0dl06Tckm_QveC91UyGHp2bl1pkKOGRmlY5WWPNZ3RQb_1yBfvPvv03PQvIUb00VOxhuqOFmgdTJOsdixhfwX9RjArvs8kxVlRCeOZ3zncqhBJ_ls-E4jA0rp3HMKQGq5_Tex2vizxLHX4axcgnVnsgXHOsu6EXym0DHMIwx8Vb-OpZarOLXMBJKDie31bnZwnoCKoGmbPriUJjkBLXkIt_-cpTZ8YtzSx2ZjGKAiOpxydOILn4g9N89MhmrzTKx2GOq8p_0jU=w1907-h478-no?authuser=1)
+![Key setup](https://lh3.googleusercontent.com/HXIyxUDWi0vcmbzPC4FSpEzUcMwpU6VXNdTqoY_cItx4GuzkKb0h6HD_LjYVhoo4OvpifrclDw6KJaF6gujnM6ohyVUPtKdFHnS8mkg9qspIM0FAfHpkqz2Gesax7ENppSKHEkQnV60fLvCalHh8E4yWUC94TL2mNNmqqYmq4cDAAfhENY_0v6B7207V5W-coHq-re_2lWR55Xgr8xbwhhLMvxQaAwTcAL3BA2jRSSgKhaSmc_VquoxZFlSfhyNwSD7tFkXYMimW9JeY6Mw9jTzp6qiPCXplF6gH97a7A2nSeiS7mP7GHPmUoum8yiSjUnDK65P-Gn8jJ7ISPCbmq_bE0lWyU74Ink0AdAD4LF4mjFORXqOc37EpvsMzdqXH7djCY6_V1Skna9pn7YmPNC_0W5BwtyHU2tK3Tku7wJfv4Mwo1Sa-XTs2WYv_VmO7SV6R_n-xihpWj0dl06Tckm_QveC91UyGHp2bl1pkKOGRmlY5WWPNZ3RQb_1yBfvPvv03PQvIUb00VOxhuqOFmgdTJOsdixhfwX9RjArvs8kxVlRCeOZ3zncqhBJ_ls-E4jA0rp3HMKQGq5_Tex2vizxLHX4axcgnVnsgXHOsu6EXym0DHMIwx8Vb-OpZarOLXMBJKDie31bnZwnoCKoGmbPriUJjkBLXkIt_-cpTZ8YtzSx2ZjGKAiOpxydOILn4g9N89MhmrzTKx2GOq8p_0jU=w1907-h478-no?authuser=1)
 
 Upon generating, the API Key is displayed one time only, so copy the string and don't lose it. Although you can always delete lost Keys and generate new ones if it ever expires or you accidentally lose it.
 
-![enter image description here](https://lh3.googleusercontent.com/zgMyID37jZnr_DkXKCd2riuQIB1mp208b9VRVjvMgwITaDSC4etZFdBEM2y9R_8NR8Hse4yzSIHEi14Uo9eTg2OSz_bqqooR9n_N-6TEYjfsd-BWvK2GSIIYhuuwbfcz2Iv9W5DEyJt7Az0nd9_2AWRqK_lGJgPfAWTcrFDHeDu7Fv6OjwPktM4FtNVRiW4LNfSji7N8IPlz2oSZD7IDpawUIZ2V-ceLA3HFPCOKs9Fo-YyV1SnojkYdJY1sqAzsWXs53mKExcs_muBbM-EOgrX99e50oUH8zWu51sRL8ccT_5xLSHVcvoD9r2WTXNMzDWKXSlJw3_ouF27acm28SCiWL2cvnvhidK4E0pLkRzxAD-iEHEaTspEXyl3XPKGKwPtGUXcYeB-7HOi7ywlCPtBXVtxvZW0wSfuw4eeUmeN6c2Pi8tKjajdMetj4WtMcONOHFVSXODDcxffoXYeceTdqsOsTUdQUIvJurZRdH2peLqAePFA7MHQktxGKL1DNdNeQQPW6rmTobb5H-EeGgVKxQiB6f3Dj2y8r9oICUrqWroe9Hkj6UE3REfKWpTceIy13ChiNli2j5HloLnQdJoiK54e6K3ql2qxQlpKCjfKWpFktE0VfYvmj5UtP5oCl09F-CWw0ToPlhzx-HJQ2njqcHchvGCV9LKBasaQzYqK0Z5zZUh6YhmgDSq4pgifuTKwtquJ3BrrU6-ocZPY02Qk=w554-h537-no?authuser=1)
+![Api key](https://lh3.googleusercontent.com/zgMyID37jZnr_DkXKCd2riuQIB1mp208b9VRVjvMgwITaDSC4etZFdBEM2y9R_8NR8Hse4yzSIHEi14Uo9eTg2OSz_bqqooR9n_N-6TEYjfsd-BWvK2GSIIYhuuwbfcz2Iv9W5DEyJt7Az0nd9_2AWRqK_lGJgPfAWTcrFDHeDu7Fv6OjwPktM4FtNVRiW4LNfSji7N8IPlz2oSZD7IDpawUIZ2V-ceLA3HFPCOKs9Fo-YyV1SnojkYdJY1sqAzsWXs53mKExcs_muBbM-EOgrX99e50oUH8zWu51sRL8ccT_5xLSHVcvoD9r2WTXNMzDWKXSlJw3_ouF27acm28SCiWL2cvnvhidK4E0pLkRzxAD-iEHEaTspEXyl3XPKGKwPtGUXcYeB-7HOi7ywlCPtBXVtxvZW0wSfuw4eeUmeN6c2Pi8tKjajdMetj4WtMcONOHFVSXODDcxffoXYeceTdqsOsTUdQUIvJurZRdH2peLqAePFA7MHQktxGKL1DNdNeQQPW6rmTobb5H-EeGgVKxQiB6f3Dj2y8r9oICUrqWroe9Hkj6UE3REfKWpTceIy13ChiNli2j5HloLnQdJoiK54e6K3ql2qxQlpKCjfKWpFktE0VfYvmj5UtP5oCl09F-CWw0ToPlhzx-HJQ2njqcHchvGCV9LKBasaQzYqK0Z5zZUh6YhmgDSq4pgifuTKwtquJ3BrrU6-ocZPY02Qk=w554-h537-no?authuser=1)
 
 ## Creating the connection to a Qlik application
 
@@ -66,7 +66,8 @@ p2q = pytoqlik.Pytoqlik(api_key=key, tenant=url, appId=appId)
 **key**, **url** and **ID** are all strings containing the API Key, the tenant's URL and the application ID as we got it in the browser.
 To effectively create the connection, we are going to instatiate a Pytoqlik() object. Let's call it **p2q** and pass the optional arguments *api_key* to be the key we generated, *tenant* should be the URL to the tenant, and *appId* should be the ID we copied from the application's overview page, just like shown above.
 
-As soon as we run this second cell, we should get a message saying the object has been pointed to a URL which uses a WebSocket Server and return the API Key used. Upon successful connection, a message displaying either **SESSION_CREATED** or **SESSION_ATTACHED** shall be shown. A new session is *created* when the user who owns the API Key used is not currently logged into the tenant, and it is *attached* when sharing a session. Both connections function effectively the same.![Successful connection](https://lh3.googleusercontent.com/CqyKEEP22cUKhWiqvZVDxKFM9OAIb_uW6VGw6e8GWXuKYebwahq54O50oA4bdZhVHemGCXll_CRh7LNxMpoWMeQ44FLpM73yxwvHE6gC0IGYsAMMkRaUm9G81UInakz154nEEZBs64FIiLQCEXynTc1Xjv5Rz5_nu57cdlKPsNl3Z-moDNQUTEej8FHe2b-3YC1nVmNZ9v-E-KpJfGX4KgJFfad9I4Am3uPZppW6YFZkcBpzxT6l7VHnfdjI4mJ9HbfmxTLhQqcJx0OCft8eBOCG-NMpQ4M1QndH7fzZIwO3tf6DeXjTqTHdCTuMGuJmwkXqMOiwZJLo206VSfBTbJmDG0xSyrggbybyK5V4U98nJyCWL2Fy0lJcL_DIq7ATjybubGQ7KH1UxZm5nH3q-HqTdj_54kWmUOz1x84x4IvyyNKz7lBB2Gy4zWOo4mnKIc4wMmTFtsfTAlvSCiJtG-TyyN_FBJ9lOc3A1Z2JaQDWiVKsawK3zRARDWPG8kSkCTrRUeGSbTW2u-Nwtc81TrRNaiItC58Eq0Uj9dQpKffLdkrWgz1GZzyU2Kkhm9zBqcfkvJE-pZf9MsFbw8zYqz6otjorPqxDQ_CXFa2f93toQbZGHYtXTJzgf1yUgw1MIF4TjICyJPMbu2evA_e33pjOgHm-sch4901e5oOQDH3p8pIHdwD9MnR9FPLYxXnGaSfcCPgQgTZ0lsqQVooQodE=w801-h151-no?authuser=1)
+As soon as we run this second cell, we should get a message saying the object has been pointed to a URL which uses a WebSocket Server and return the API Key used. Upon successful connection, a message displaying either **SESSION_CREATED** or **SESSION_ATTACHED** shall be shown. A new session is *created* when the user who owns the API Key used is not currently logged into the tenant, and it is *attached* when sharing a session. Both connections function effectively the same.
+![Successful connection](https://lh3.googleusercontent.com/CqyKEEP22cUKhWiqvZVDxKFM9OAIb_uW6VGw6e8GWXuKYebwahq54O50oA4bdZhVHemGCXll_CRh7LNxMpoWMeQ44FLpM73yxwvHE6gC0IGYsAMMkRaUm9G81UInakz154nEEZBs64FIiLQCEXynTc1Xjv5Rz5_nu57cdlKPsNl3Z-moDNQUTEej8FHe2b-3YC1nVmNZ9v-E-KpJfGX4KgJFfad9I4Am3uPZppW6YFZkcBpzxT6l7VHnfdjI4mJ9HbfmxTLhQqcJx0OCft8eBOCG-NMpQ4M1QndH7fzZIwO3tf6DeXjTqTHdCTuMGuJmwkXqMOiwZJLo206VSfBTbJmDG0xSyrggbybyK5V4U98nJyCWL2Fy0lJcL_DIq7ATjybubGQ7KH1UxZm5nH3q-HqTdj_54kWmUOz1x84x4IvyyNKz7lBB2Gy4zWOo4mnKIc4wMmTFtsfTAlvSCiJtG-TyyN_FBJ9lOc3A1Z2JaQDWiVKsawK3zRARDWPG8kSkCTrRUeGSbTW2u-Nwtc81TrRNaiItC58Eq0Uj9dQpKffLdkrWgz1GZzyU2Kkhm9zBqcfkvJE-pZf9MsFbw8zYqz6otjorPqxDQ_CXFa2f93toQbZGHYtXTJzgf1yUgw1MIF4TjICyJPMbu2evA_e33pjOgHm-sch4901e5oOQDH3p8pIHdwD9MnR9FPLYxXnGaSfcCPgQgTZ0lsqQVooQodE=w801-h151-no?authuser=1)
 
 **Congratulations**, we are ready to call methods on top of our application!
 
@@ -82,7 +83,7 @@ data = seaborn.load_dataset('flights')
 data
 ```
 This returns a pandas DataFrame containing 144 rows and 3 columns of sample data. We have flight information containing flight year, month and the number of passengers. 
-![enter image description here](https://lh3.googleusercontent.com/JUFkBYnDdBi9T8OhW79else4az8dNnh0NPbHrXFecSHvSlnUYI75gGg0LwMTVSMOQYc2AMYK92zoi_-jw2QKyks57re2Kh9dz8XzDSdllAD2MpS6_wM807ymqpNuouHM5Fj_JXzabc4L55uSC9gbC92B9xU3acsLU6fFCO_XM67bHmhRCjVzr3x_IL0slvWLamR1vc71yDlndUCrMdiROx-h5iRVqu4mlf2YcPfu-1E4pZuHon0rc2U-Gle2bD7fQK6N7kwdBwHrvjOCcjYbksScvOfvO5O9nFvdIY7fyCPstP1-Yw-iBmFDbg5sSHMa_uTM0Ct43QRE3JmEsMTQL4VsuWcOc4jndykxL6mCPEWKRuxPla11v4_rp-1rqg2CWiHiYaVoIfTuUpdrstTUVqXcJnN-4XHYSt6lBFapzQjz218lNbtfrvLmD1DSjx4ccqFeNYGA3NNMV-Byle8byu4Z4QtQsbR14xFYXgyQmUlpMY_RXcZrBvv5vePFqkM8R3FfAjjrBCVpuTeelQB0KBMc5dIjwby-vqnBRvTA9KYoOmztFo1OPd0u6Q9m_Ah4IX4eqqX9gQkM-m20l0Iorfn8dROlDX46xpQ-ql_-NNeiPM0d2wIPh5c1ZeE6ZlTW6qYHfRCRahDwZ94dtW-NIpu1AkqMZnSdB-Y4dBUTgC0lIBMvEu1h0j_NZ68vIr3gFpmjqQmQMn8J3bSbiGu8U3Q=w337-h465-no?authuser=1)
+![pandas raw data](https://lh3.googleusercontent.com/JUFkBYnDdBi9T8OhW79else4az8dNnh0NPbHrXFecSHvSlnUYI75gGg0LwMTVSMOQYc2AMYK92zoi_-jw2QKyks57re2Kh9dz8XzDSdllAD2MpS6_wM807ymqpNuouHM5Fj_JXzabc4L55uSC9gbC92B9xU3acsLU6fFCO_XM67bHmhRCjVzr3x_IL0slvWLamR1vc71yDlndUCrMdiROx-h5iRVqu4mlf2YcPfu-1E4pZuHon0rc2U-Gle2bD7fQK6N7kwdBwHrvjOCcjYbksScvOfvO5O9nFvdIY7fyCPstP1-Yw-iBmFDbg5sSHMa_uTM0Ct43QRE3JmEsMTQL4VsuWcOc4jndykxL6mCPEWKRuxPla11v4_rp-1rqg2CWiHiYaVoIfTuUpdrstTUVqXcJnN-4XHYSt6lBFapzQjz218lNbtfrvLmD1DSjx4ccqFeNYGA3NNMV-Byle8byu4Z4QtQsbR14xFYXgyQmUlpMY_RXcZrBvv5vePFqkM8R3FfAjjrBCVpuTeelQB0KBMc5dIjwby-vqnBRvTA9KYoOmztFo1OPd0u6Q9m_Ah4IX4eqqX9gQkM-m20l0Iorfn8dROlDX46xpQ-ql_-NNeiPM0d2wIPh5c1ZeE6ZlTW6qYHfRCRahDwZ94dtW-NIpu1AkqMZnSdB-Y4dBUTgC0lIBMvEu1h0j_NZ68vIr3gFpmjqQmQMn8J3bSbiGu8U3Q=w337-h465-no?authuser=1)
 Let's get this information to our application using **toQlik()**. The fourth cell is:
 ```python
 p2q.toQlik(data)
@@ -115,7 +116,7 @@ Finally, with the Object ID in hands, all it takes is a single call to **toPy()*
 p2q.toPy('qCZbkW')
 ```
 Which returns, for the data we provided, a DataFrame containing every year, and the sum of passengers in that year:
-![enter image description here](https://lh3.googleusercontent.com/EZoRPEPTGBcn78DmyhpPp9rETkL-w0IwtI4XxC5258LrPtykbmU9PnrPTmEXA1Mri71wECTxuoqjkVcXb8SD6IIZ1GcNeRdMOMMEnR-UI1Bv1y35kq_go42mTDoRo0nVjAx8HJe80F6atVBI1vw43PPYtaQqcG-hZno1cbR4iio0pJoy4uQdZJCtU2GYWCA9HSsPZnOX4X8KRWDvIiIWulSFQNyn65FX7IOfAAYJ2bfPguaTD35NyxkJeO1Pp1TyH631rTcQcrCYqfWYTZKw9D6MdPdlpPixqMK3lqg7qB5cBo_nFsZM7GnrV-S0T_wXTZnVDaYrLXmbMIc2mmRJjDZcGEoRzLpFx9qaa-uZC1g_CpYMorIkVWuZ1coCsIjiPvaUn-LoEA0e8iVLdPmCEDsxkBmw-B6Ju6PNdBYVzM2FqudNRwW2dX4LCDGicHKgWrM4belmrRdaVJv7t1G8QIxLW2e2-KHX99iyV8M_69ZfyJESfN8u9nNq0JJif5yItRLD2hvR2nWdJ9S3FZ4pip5bw8ve1afcyqJMyi-Fz6gd3eE-bKlxPX2yDbUJUl1F0ck_KmfafehWg8TjQSswGF2DUCBtMDoYFp6A85T2YWvvkefi-k64TUWzPiBbvMhGH-fq4LDj06LgqGOrLT5XFjOywS4vqb4e26aIqj5sYl26TfTlxNR5DTznVycvfjEfrs3ZGoYd12w6TAgKjvbHCek=w311-h465-no?authuser=1)
+![resulting data](https://lh3.googleusercontent.com/EZoRPEPTGBcn78DmyhpPp9rETkL-w0IwtI4XxC5258LrPtykbmU9PnrPTmEXA1Mri71wECTxuoqjkVcXb8SD6IIZ1GcNeRdMOMMEnR-UI1Bv1y35kq_go42mTDoRo0nVjAx8HJe80F6atVBI1vw43PPYtaQqcG-hZno1cbR4iio0pJoy4uQdZJCtU2GYWCA9HSsPZnOX4X8KRWDvIiIWulSFQNyn65FX7IOfAAYJ2bfPguaTD35NyxkJeO1Pp1TyH631rTcQcrCYqfWYTZKw9D6MdPdlpPixqMK3lqg7qB5cBo_nFsZM7GnrV-S0T_wXTZnVDaYrLXmbMIc2mmRJjDZcGEoRzLpFx9qaa-uZC1g_CpYMorIkVWuZ1coCsIjiPvaUn-LoEA0e8iVLdPmCEDsxkBmw-B6Ju6PNdBYVzM2FqudNRwW2dX4LCDGicHKgWrM4belmrRdaVJv7t1G8QIxLW2e2-KHX99iyV8M_69ZfyJESfN8u9nNq0JJif5yItRLD2hvR2nWdJ9S3FZ4pip5bw8ve1afcyqJMyi-Fz6gd3eE-bKlxPX2yDbUJUl1F0ck_KmfafehWg8TjQSswGF2DUCBtMDoYFp6A85T2YWvvkefi-k64TUWzPiBbvMhGH-fq4LDj06LgqGOrLT5XFjOywS4vqb4e26aIqj5sYl26TfTlxNR5DTznVycvfjEfrs3ZGoYd12w6TAgKjvbHCek=w311-h465-no?authuser=1)
 
 We can always assign this DataFrame to a variable to save it, and then perform as many operations as we want with it. If you are a data scientist in Python, *pandas* is most likely your best friend, and the possibilities and analysis you can now perform is much, much higher. You can extract and input all kinds of data in machine learning algorithms, you can format and reformat structures, save them in a variable and input them back into the application by using **toQlik()** once again, you can perform regressions, trend predictions, etc... all using other Python libraries.
 
