@@ -8,9 +8,15 @@ PyToQlik is a library that allows you to integrate Qlik Desktop with Jupyter not
 * Create a Qlik object with data from a pandas DataFrame data structure and/or;
 * Import data from a Qlik object and create a pandas DataFrame to work with in Python.
 
-## Getting Started
+# Latest Updates (24/jun/2021)
 
-For this library to work you must have a functioning Qlik Desktop App installed and running on your local machine. You will also need to have the *pandas* library and a Jupyter Notebook local server (read https://jupyter.readthedocs.io/en/latest/running.html).
+:star2: Just added some basic Qlik Cloud SaaS functionalities! :star2:
+
+Be a more powerful data scientist by importing and extracting data from Qlik objects in Cloud applications inside your tenant! 
+
+# Getting Started
+
+For this library to work you might want to have a functioning Qlik Desktop App installed and running on your local machine, or, if using the Cloud version, you will need an API Key to your tenant. There are tutorials on here and on Qlik's website about API Keys. You will also find having the *pandas* library useful, and either a [Jupyter Notebook local server](https://jupyter.readthedocs.io/en/latest/running.html) or use something like [Google Colaboratory](https://colab.research.google.com/)
 
 
 You can then download and install PyToQlik using:
@@ -52,24 +58,30 @@ app.toPy('your ObjectID')
 ## Step by step guide
 <img src="toPy.gif" />
 
----
 
-### Documentation
 
-PyToQlik current documentation can be found [HERE](docs/documentation.md).
+# Documentation
 
----
+PyToQlik current documentation can be found [HERE](docs/Documentation.md).
 
-### Features in development
 
-#### Connectivity
+
+# Comprehensive Qlik Cloud tutorial
+
+A case-study based tutorial has been developed and is available [HERE](docs/PyToQlik%20Cloud%20Tutorial.md).
+
+
+
+# Features in development
+
+## Connectivity
 - Qlik Enterprise support
-- Qlik Cloud robustness
+- Qlik Cloud robustness (easy-to-use embedding, more global functionality)
 
-#### Functionality
-- Data fetching based on dimensions and measures
+## Planned Functionality
+- Data fetching based on dimension and measure names
 - More robust embedding objects and sheets
-- More robust script editing
+- More robust script editing (appending and replacing)
 - Object creation and manipulation via Python
 - Auxiliary functions, app listing and object listing
 - Task creation and managing
