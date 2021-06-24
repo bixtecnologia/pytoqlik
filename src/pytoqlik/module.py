@@ -487,6 +487,10 @@ class Pytoqlik():
         self.ws.connect(self.tenant + '/app/' + self.CloudId, header=self.auth_header, origin=self.CloudTenant)
         result = self.ws.recv()
 
+    def displayIFrame(self): # IN DEVELOPMENT
+        url = 'https://redacted-redacted.us.qlikcloud.com/sense/app/5078a285-39f8-4bd1-8b1b-351d6cef77ea/sheet/c44bfc0c-749f-4fcc-8378-c80905b29f18/state/analysis'
+        display(IFrame(url, 700, 700))
+
     ### FUNCTIONALITY ###
     def toPy(self, objId):
         if (self.isCloud):
@@ -548,13 +552,16 @@ class Pytoqlik():
                 ans = input('This will replace your current data scripts in the app. Are you sure you want to proceed? (Y/N)\n')
                 if ans == 'y' or ans == 'Y':
                     self.setCloudScript(script=compositeScript)
+                    self.saveCloudApp()
                     self.reloadCloudApp()
+                    print('Script imported')
                 else:
                     print('Operation aborted')
             else:
                 self.setCloudScript(script=compositeScript)
                 self.saveCloudApp()
                 self.reloadCloudApp()
+                print('Script imported')
             
         else:
             print(self.host)
@@ -629,7 +636,9 @@ class Pytoqlik():
             result = self.ws.recv()
             result = json.loads(result)
             if result['error']['code'] == 1002:
-                print(f'App {self.id} is already open. Please instatiate a new Pytoqlik() object if you want to change apps')
+                print(f'App {self.CloudId} is already open. Please instatiate a new Pytoqlik() object if you want to change apps. Opening in browser for now (wont open in Google Colab)...')
+                url = self.CloudTenant + '/sense/app/' + self.CloudId
+                webbrowser.open(url)
 
         else:
             self.qs = QSEngineAPI(self.host, verbose=verbose)
@@ -662,7 +671,7 @@ class Pytoqlik():
             qs.close()
             return app
 
-    def listApps(self, verbose=False, return_json=False):
+    def listApps(self, return_json=False):
         """Returns a pandas DataFrame containing information about all Qlik Apps in host. KNOWN ISSUES: returns weird results, depending on which app Pytoqlik is referring to. Doesnt return all apps"""          
 
         if (self.isCloud):
