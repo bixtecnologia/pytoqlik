@@ -31,7 +31,7 @@ class QSEngineAPI:
     def close(self):
         self.ws.close()
 
-    def GetDocListDic():
+    def GetDocListDic(self):
         return {
             "handle": -1,
             "method": "GetDocList",
@@ -69,6 +69,15 @@ class QSEngineAPI:
             ],
             "outKey": -1,
             "id": randint(1, 10000000)
+        }
+
+    def GetActiveAppDic():
+        return {
+            "jsonrpc": "2.0",
+            "id": randint(1,1000000),
+            "method": "GetActiveDoc",
+            "handle": -1,
+            "params": []
         }
 
     def GetDocList(self):
@@ -335,63 +344,71 @@ class QSEngineAPIApp(QSEngineAPI):
             print('Shape (r,c): ' + str(df.shape))
             return df
 
-class Pytoqlik():
-    ### INIT FUNCTION ###
-    def __init__(self, host="ws://localhost:4848/app", api_key='', tenant='', appId='', verbose=True):
-        self.host = host
+
+class QSEngineAPICloud:
+    def __init__(self, key='', tenant='', appId='', verbose=False, return_json=False):
+        self.key = key
         self.tenant = tenant.replace('https://', 'wss://')
-        self.auth_header = {'Authorization': 'Bearer ' + api_key}
+        self.appId = appId
+        self.auth_header = {'Authorization': 'Bearer ' + key}
+        self.CloudTenant = tenant.replace('wss://', 'https://')
         self.CloudId = appId
-        self.CloudTenant = tenant
 
-        if (self.tenant != 'https://') and (self.auth_header != {'Authorization': 'Bearer '}):
-            self.isCloud = True
-            if (verbose):
-                print('Successfully pointed to Qlik Cloud at: ' + str(self.tenant) + ' with API key: ' + str(api_key))
-        else:
-            self.isCloud = False
-            if (verbose):
-                print('Successfully pointed to Qlik Desktop at: ' + str(self.host))
+        self.isCloud = True
+        if verbose:
+            print('Pointed to Qlik Cloud at: ' + self.tenant + ' with API key: ' + self.key)
 
-        if (self.isCloud):
-            self.ws = websocket.WebSocket()
-            self.ws.connect(self.tenant + '/app/' + appId, header=self.auth_header, origin=tenant)
-            print(self.ws.recv())
+        self.ws = websocket.WebSocket()
+        self.ws.connect(self.tenant + '/app/' + self.appId, header=self.auth_header, origin=self.CloudTenant)
+        result = json.loads(self.ws.recv())
+        if (return_json):
+            print(result)
+        if (result['params']['qSessionState'] == 'SESSION_ATTACHED') and verbose:
+            print('Session attached successfully.')
+        elif (result['params']['qSessionState'] == 'SESSION_CREATED') and verbose:
+            print('Session created successfully.')
+        elif (result['params']['qSessionState'] != 'SESSION_ATTACHED') and (result['params']['qSessionState'] != 'SESSION_CREATED'):
+            raise Exception('Failed to create or attach session. Please check authentication and tenant parameters.')
 
-    ### GETTERS AND SETTERS FOR CLOUD ###
-    def getActiveApp(self):
-        if (self.isCloud):
-            self.ws.send(json.dumps({
+    def send_request(self, request):
+        self.ws.send(json.dumps(request))
+        result = self.ws.recv()
+        y = json.loads(result)
+        return y
+
+    def OpenAppDic(self, appName):
+        return {
+            "handle": -1,
+            "method": "OpenDoc",
+            "params": {
+                "qDocName": appName,
+                "qUserName": "",
+                 "qPassword": "",
+                "qSerial": "",
+                "qNoData": False
+            }
+        }
+            
+    def GetActiveAppDic(self):
+        return {
             "jsonrpc": "2.0",
             "id": randint(1,1000000),
             "method": "GetActiveDoc",
             "handle": -1,
             "params": []
-            }))
-            result = self.ws.recv()
-            return result
-            
-    def createCloudApp(self, appName='PythonAppCloud', verbose=True):
-        if (self.isCloud):
-            self.ws.send(json.dumps({
-            "jsonrpc": "2.0",
-            "id": 6,
-            "handle": -1,
-            "method": "CreateApp",
-            "params": {
-                "qAppName": appName,
-                "qLocalizedScriptMainSection": "value",
-                "qLocale": "value"
-                }
-            }))
-        result = json.loads(self.ws.recv())
-        if (verbose) and result['result']['qSuccess'] == True:
-            print(f'Successfully created app {appName} with ID: {result["result"]["qAppId"]}')
-        return result
+        }
 
-    def setCloudScript(self, handle=1, script='', verbose=False):
-        if (self.isCloud):
-            self.ws.send(json.dumps({
+    def GetDocListDic(self):
+        return {
+	        "handle": -1,
+	        "method": "GetDocList",
+	        "params": {},
+	        "outKey": -1,
+	        "id": randint(1,1000000)
+        }
+
+    def SetScriptDic(self, handle, script):
+        return {
             "handle": handle,
             "method": "SetScript",
             "params": {
@@ -399,15 +416,21 @@ class Pytoqlik():
             },
             "outKey": -1,
             "id": randint(1,1000000)
-        }))
-        result = json.loads(self.ws.recv())
-        if (verbose) and result['change'][0] == 1:
-            print('Script set successfully')
-        return result
+        }
 
-    def reloadCloudApp(self, handle=1, verbose=False):
-        if (self.isCloud):
-            self.ws.send(json.dumps({
+    def SaveAppDic(self, handle):
+        return {
+            "handle": handle,
+            "method": "DoSave",
+            "params": {
+                "qFileName": ""
+            },
+            "outKey": -1,
+            "id": randint(1,1000000)
+        }
+
+    def ReloadDic(self, handle):
+        return {
             "handle": handle,
             "method": "DoReload",
             "params": {
@@ -417,43 +440,19 @@ class Pytoqlik():
             },
             "outKey": -1,
             "id": randint(1,1000000)
-        }))
-        result = json.loads(self.ws.recv())
-        if (verbose) and result['change'][0] == 1:
-            print('Script reloaded successfully')
-        return result
+        }
 
-    def saveCloudApp(self, handle=1, verbose=False):
-        if (self.isCloud):
-            self.ws.send(json.dumps({
-            "handle": handle,
-            "method": "DoSave",
-            "params": {
-                "qFileName": ""
-            },
-            "outKey": -1,
-            "id": randint(1,1000000)
-        }))
-        result = json.loads(self.ws.recv())
-        if (verbose) and result['change'][0] == 1:
-            print('Script saved successfully')
-        return result
-        
-    def getObject(self, objId, verbose=False):
-        if (self.isCloud):
-            self.ws.send(json.dumps({
+    def GetObjectDic(self, objId):
+        return {
             "handle": 1,
             "method": "GetObject",
             "params": {
                 "qId": objId
             }
-        }))
-        result = json.loads(self.ws.recv())
-        return result
+        }
 
-    def getHCData(self, handle, qWidth=10, qHeight=1000):
-        if (self.isCloud):
-            self.ws.send(json.dumps({
+    def GetHCDataDic(self, handle, qWidth, qHeight):
+        return {
             "handle": handle,
             "method": "GetHyperCubeData",
             "params": {
@@ -467,38 +466,143 @@ class Pytoqlik():
                     }
                 ]
             }
-        }))
-        result = json.loads(self.ws.recv())
-        return result
+        }
 
-    def getCloudLayout(self, handle=1, verbose=False):
-        if (self.isCloud):
-            self.ws.send(json.dumps({
+    def GetLayoutDic(self, handle):
+        return {
             "jsonrpc": "2.0",
             "id": randint(1,100000),
             "handle": handle,
             "method": "GetLayout",
             "params": {}
-            }))
-        result = json.loads(self.ws.recv())
-        return result
+        }
 
-    def cloudReconnect(self):
+    def GetScriptDic(self, handle):
+        return {
+            "handle": handle,
+            "method": "GetScript",
+            "params": {},
+            "outKey": -1,
+            "id": randint(1,100000)
+        }
+
+    def reconnect(self, verbose=False):
         self.ws.connect(self.tenant + '/app/' + self.CloudId, header=self.auth_header, origin=self.CloudTenant)
         result = self.ws.recv()
+        result = json.loads(result)
+        if verbose:
+            if (result['params']['qSessionState'] == 'SESSION_ATTACHED') and verbose:
+                print('Session attached successfully.')
+            elif (result['params']['qSessionState'] == 'SESSION_CREATED') and verbose:
+                print('Session created successfully.')
+            elif (result['params']['qSessionState'] != 'SESSION_ATTACHED') and (result['params']['qSessionState'] != 'SESSION_CREATED'):
+                raise Exception('Failed to create or attach session. Please check authentication and tenant parameters.')
+        return result
 
-    def displayIFrame(self): # IN DEVELOPMENT
+    def reload(self, handle, verbose=False):
+        result = self.send_request(self.ReloadDic(handle=handle))
+        if verbose:
+            print('Reload successful')
+        return result
+
+    def SaveApp(self, handle, verbose=False):
+        result = self.send_request(self.SaveAppDic(handle=handle))
+        if (verbose) and result['change'][0] == 1:
+            print('Application saved successfully')
+        return result
+
+    def GetActiveApp(self, verbose=False):
+        result = self.send_request(self.GetActiveAppDic())
+        if verbose:
+            print('Selected app is: ' + result['result']['qReturn']['qGenericId'])
+        return result
+
+    def GetActiveAppHandle(self):
+        result = self.send_request(self.GetActiveAppDic())
+        return result['result']['qReturn']['qHandle']
+
+    def GetObject(self, objId, verbose=False):
+        result = self.send_request(self.GetObjectDic(objId=objId))
+        if verbose:
+            print('Object handle: ' + str(result['result']['qReturn']['qHandle']) + ' | Object type: ' + str(result['result']['qReturn']['qGenericType']))
+        return result
+
+    def GetHCData(self, handle, qWidth=10, qHeight=1000):
+        result = self.send_request(self.GetHCDataDic(handle=handle, qWidth=qWidth, qHeight=qHeight))
+        return result
+
+    def GetLayout(self, handle):
+        result = self.send_request(self.GetLayoutDic(handle=handle))
+        return result
+
+    def OpenApp(self, appName):
+        result = self.send_request(self.OpenAppDic(appName=appName))
+        return result
+
+    def GetDocList(self):
+        result = self.send_request(self.GetDocListDic())
+        return result
+
+    def GetScript(self, handle):
+        result = self.send_request(self.GetScriptDic(handle=handle))
+        return result
+
+    def SetScript(self, handle, script, verbose=False):
+        result = self.GetScript(handle=handle)
+        scriptString = result['result']['qScript']
+        pytoqlikTab = '///$tab PyToQlik Script\r\n'
+        if pytoqlikTab in scriptString:
+            # There is a PyToQlik Script section. Overwrite it!
+            if (verbose):
+                print('Application already has a PyToQlik Script dedicated section. Overwriting it.')
+
+            start = '///$tab PyToQlik Script\r\n'
+            end = '///$tab'
+            replaceable = scriptString.split(start)[1].split(end)[0]
+            
+            newScript = scriptString.replace(replaceable, script)
+
+            result = self.send_request(self.SetScriptDic(handle=handle, script=newScript))
+            return result
+
+        else:
+            # There isn't a PyToQlik Script section yet. Append it to script!
+            if (verbose):
+                print('Application has no PyToQlik Script dedicated section. Creating it.')
+
+            newScript = scriptString + pytoqlikTab + script
+
+            result = self.send_request(self.SetScriptDic(handle=handle, script=newScript))
+            return result
+
+
+class Pytoqlik():
+    def __init__(self, host="ws://localhost:4848/app", api_key='', tenant='', appId='', verbose=False, return_json=False):
+        self.host = host
+        self.tenant = tenant.replace('https://', 'wss://')
+        self.key = api_key
+        self.auth_header = {'Authorization': 'Bearer ' + api_key}
+        self.CloudId = appId
+        self.CloudTenant = tenant
+
+        if (self.tenant != 'https://') and (self.auth_header != {'Authorization': 'Bearer '}):
+            self.isCloud = True
+            self.qsc = QSEngineAPICloud(key=self.key, tenant=self.tenant, appId=self.CloudId, verbose=verbose, return_json=return_json)
+            
+    ### IN DEVELOPMENT ###
+    def displayIFrame(self):
         url = 'https://redacted-redacted.us.qlikcloud.com/sense/app/5078a285-39f8-4bd1-8b1b-351d6cef77ea/sheet/c44bfc0c-749f-4fcc-8378-c80905b29f18/state/analysis'
         display(IFrame(url, 700, 700))
-
+        
     ### FUNCTIONALITY ###
-    def toPy(self, objId):
+    def toPy(self, objId, verbose=False):
         if (self.isCloud):
-            self.cloudReconnect()
-            self.getActiveApp()
-            handle = self.getObject(objId)['result']['qReturn']['qHandle']
-            result = self.getHCData(handle)
-            result2 = self.getCloudLayout(handle)
+            self.qsc.reconnect(verbose=verbose)
+            self.qsc.GetActiveApp(verbose=verbose)
+
+            handle = self.qsc.GetObject(objId, verbose=verbose)['result']['qReturn']['qHandle']
+            result = self.qsc.GetHCData(handle)
+            result2 = self.qsc.GetLayout(handle)
 
             columns = [x['qFallbackTitle'] for x in result2['result']['qLayout']['qHyperCube']['qDimensionInfo']] + [x['qFallbackTitle'] for x in result2['result']['qLayout']['qHyperCube']['qMeasureInfo']]
             if ('columnOrder' in result2['result']['qLayout']['qHyperCube']):
@@ -515,12 +619,14 @@ class Pytoqlik():
             df.columns = columns
 
             if (df.empty):  # No measures in object
-                print(f'No data in {objId} object. Is it empty?')
-                print('Shape (r,c): ' + str(df.shape))
+                if (verbose):
+                    print(f'No data in {objId} object. Is it empty?')
+                    print('Shape (r,c): ' + str(df.shape))
                 return df
            
             else:
-                print('Shape (r,c): ' + str(df.shape))
+                if (verbose):
+                    print('Shape (r,c): ' + str(df.shape))
                 return df
 
     def toQlik(self, *df,
@@ -529,7 +635,7 @@ class Pytoqlik():
                redirect=False,
                embedded=True,
                replace=True,
-               verbose=True,
+               verbose=False,
                width = 980,
                height = 800,
                decimal='.',
@@ -537,6 +643,7 @@ class Pytoqlik():
                warning=True):
 
         if (self.isCloud):
+            self.qsc.reconnect(verbose=verbose)
             compositeScript = ''
             for dataframe in df:
                 data = dataframe.to_csv(sep=separator, index=False, decimal=decimal)
@@ -547,21 +654,23 @@ class Pytoqlik():
                 """
                 compositeScript = compositeScript + currentScript
 
-            self.getActiveApp()
+            handle = self.qsc.GetActiveAppHandle()
             if (warning):
-                ans = input('This will replace your current data scripts in the app. Are you sure you want to proceed? (Y/N)\n')
+                ans = input('This will replace your current data scripts in the application. Are you sure you want to proceed? (Y/N)\n')
                 if ans == 'y' or ans == 'Y':
-                    self.setCloudScript(script=compositeScript)
-                    self.saveCloudApp()
-                    self.reloadCloudApp()
-                    print('Script imported')
+                    self.qsc.SetScript(handle, script=compositeScript, verbose=verbose)
+                    self.qsc.SaveApp(handle, verbose=verbose)
+                    self.qsc.reload(handle, verbose=verbose)
+                    if verbose:
+                        print('Script successfully imported')
                 else:
                     print('Operation aborted')
             else:
-                self.setCloudScript(script=compositeScript)
-                self.saveCloudApp()
-                self.reloadCloudApp()
-                print('Script imported')
+                self.qsc.SetScript(handle, script=compositeScript, verbose=verbose)
+                self.qsc.SaveApp(handle, verbose=verbose)
+                self.qsc.reload(handle, verbose=verbose)
+                if verbose:
+                    print('Script successfully imported')
             
         else:
             print(self.host)
@@ -616,27 +725,14 @@ class Pytoqlik():
                 embedded=True,
                 width=980,
                 height=800,
-                verbose=True):
+                verbose=False):
         """Opens specified Qlik app. Cloud versions can only access apps that the user's API key can access. Desktop version accesses all apps inside Qlik's folder"""
 
         if (self.isCloud):
             print('Connecting to Qlik Cloud...')
-            self.ws.send(json.dumps(
-            {
-                "handle": -1,
-                "method": "OpenDoc",
-                "params": {
-                    "qDocName": appName,
-                    "qUserName": "",
-                    "qPassword": "",
-                    "qSerial": "",
-                    "qNoData": False
-                }
-            }))
-            result = self.ws.recv()
-            result = json.loads(result)
+            result = self.qsc.OpenApp(appName)
             if result['error']['code'] == 1002:
-                print(f'App {self.CloudId} is already open. Please instatiate a new Pytoqlik() object if you want to change apps. Opening in browser for now (wont open in Google Colab)...')
+                print(f'App {self.CloudId} is already open. Please instatiate a new Pytoqlik() object if you want to change apps. Opening {self.CloudId} in browser... (Will not work in Google Colab)')
                 url = self.CloudTenant + '/sense/app/' + self.CloudId
                 webbrowser.open(url)
 
@@ -672,18 +768,10 @@ class Pytoqlik():
             return app
 
     def listApps(self, return_json=False):
-        """Returns a pandas DataFrame containing information about all Qlik Apps in host. KNOWN ISSUES: returns weird results, depending on which app Pytoqlik is referring to. Doesnt return all apps"""          
+        """Returns a pandas DataFrame containing information about all Qlik Apps in host. KNOWN ISSUES: returns weird results, depending on which app Pytoqlik is referring to + doesnt return all apps"""          
 
         if (self.isCloud):
-            self.ws.send(json.dumps({
-	            "handle": -1,
-	            "method": "GetDocList",
-	            "params": {},
-	            "outKey": -1,
-	            "id": randint(1,1000000)
-                }))
-            result = self.ws.recv()
-            result = json.loads(result)
+            result = self.qsc.GetDocList()
             sizeOf = len(result['result']['qDocList'])
             for i in range(sizeOf):
                 print(result['result']['qDocList'][i]['qDocName'])
