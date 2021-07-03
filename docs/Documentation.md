@@ -260,13 +260,17 @@ fetchData(dim, dimLabel, measures=[], measureLabels=[], verbose=False)
 ### Disclaimer
 This function currently sorts by a single dimension, since multiple dimensions are created inside Qlik as different HyperCubes. To sort this, you might want to call fetchData for all dimensions and concatenate/work with the resulting DataFrames.
 
+Also, since once again, Cloud applications are referenced directly on a Pytoqlik() object, you must call fetchData on a Pytoqlik() object, while Desktop applications you must first open the application using openApp(), then call fetchData on that object, as shown in the examples below.
+
 ### Example 1:
 ```python
 import pytoqlik
 p2q = pytoqlik.Pytoqlik()
 
-# App has seaborn "flights" data in it
-p2q.fetchData('year', 
+app = p2q.openApp('MyApp', embedded=False)
+
+# "MyApp" has seaborn "flights" data in it
+app.fetchData('year', 
               'YEAR', 
               measures=['sum(passengers)', 'avg(passengers)'],
               measureLabels=['YEAR_TOTAL','YEAR_AVG'])
