@@ -11,12 +11,28 @@ from IPython.core.display import display, HTML
 from time import sleep
 
 class QSEngineAPI:
-    def __init__(self, host="ws://localhost:4848/app", verbose=False):
-        self.host = host
-        self.ws = websocket.create_connection(host, sslopt={"cert_reqs": ssl.CERT_NONE})
-        result = self.ws.recv()
-        if(verbose):
-            print(f'Connect to {host}')
+    def __init__(self, host="ws://localhost:4848/app", userDirectory='', userId='', connectionType='cert', certs='', verbose=False):
+        # Connect to Enterprise
+        # UserID and userDirectory can be found in the Qlik Management Console (QMC)
+        # Certificates can also be exported in the QMC (https://help.qlik.com/en-US/sense-admin/February2021/Subsystems/DeployAdministerQSE/Content/Sense_DeployAdminister/QSEoW/Administer_QSEoW/Managing_QSEoW/export-certificates.htm)
+        # Auth here: https://help.qlik.com/en-US/sense-developer/June2019/Subsystems/RepositoryServiceAPI/Content/Sense_RepositoryServiceAPI/RepositoryServiceAPI-Example-Connect-cURL-Certificates.htm
+        if (userDirectory != ''):
+            certs = ({"ca_certs":'root.pem',
+                      "certfile": 'client.pem',
+                      "keyfile": 'client_key.pem',
+                      "cert_reqs": ssl.CERT_REQUIRED,
+                      "server_side": False})
+            websocket.create_connection(host, sslopt=certs, header={f"'X-Qlik-User':  'UserDirectory={connectionType}; UserId={userId}'"})
+
+        # Connect to Desktop
+        else:
+            self.host = host
+            self.ws = websocket.create_connection(host, sslopt={"cert_reqs": ssl.CERT_NONE})
+            result = self.ws.recv()
+            if(verbose):
+                print(f'Connect to {host}')
+
+        
 
     def reconnect(self):
         self.ws = websocket.create_connection(self.host, sslopt={"cert_reqs": ssl.CERT_NONE})
@@ -71,7 +87,7 @@ class QSEngineAPI:
             "id": randint(1, 10000000)
         }
 
-    def GetActiveAppDic():
+    def GetActiveAppDic(self):
         return {
             "jsonrpc": "2.0",
             "id": randint(1,1000000),
@@ -81,7 +97,7 @@ class QSEngineAPI:
         }
 
     def GetDocList(self):
-        return self.send_request(QSEngineAPI.GetDocListDic())
+        return self.send_request(QSEngineAPI.GetDocListDic(self))
 
     def CreateApp(self, qAppName, replace):
         is_new = 1
@@ -235,6 +251,116 @@ class QSEngineAPIApp(QSEngineAPI):
             }
         }
 
+    def CreateSessionObjectDic(self, dim, dimLabel, measure):
+        qMeasuresList = []
+        for i in range(len(measure)):
+            qMeasuresList.append({
+                                "qLibraryId": "",
+                                "qSortBy": {
+                                    "qSortByState": 0,
+                                    "qSortByFrequency": 0,
+                                    "qSortByNumeric": 0,
+                                    "qSortByAscii": 0,
+                                    "qSortByLoadOrder": 1,
+                                    "qSortByExpression": 0,
+                                    "qExpression": {
+                                        "qv": ""
+                                    }
+                                },
+                                "qDef": {
+                                    "qLabel": "P2Q",
+                                    "qDescription": "Created using PyToQlik",
+                                    "qTags": [
+                                        "tags"
+                                    ],
+                                    "qGrouping": "N",
+                                    "qDef": measure[i]
+                                },
+                                "qAttributeExpressions": [
+                                    {
+                                        "qExpression": ""
+                                    }
+                                ]
+                            })
+
+        return {
+        "jsonrpc": "2.0",
+        "id": randint(1,100000),
+        "method": "CreateSessionObject",
+        "handle": 1,
+        "params": [
+            {
+                "qInfo": {
+                    "qId": "PTQTempObject",
+                    "qType": "Chart"
+                },
+                "qHyperCubeDef": {
+                    "qStateName": "$",
+                    "qDimensions": [
+                        {
+                            "qLibraryId": "",
+                            "qNullSuppression": False,
+                            "qIncludeElemValue": False,
+                            "qDef": {
+                                "qGrouping": "N",
+                                "qFieldDefs": [
+                                    dim
+                                ],
+                                "qFieldLabels": [
+                                    dimLabel
+                                ],
+                                "qSortCriterias": [
+                                    {
+                                        "qSortByState": 0,
+                                        "qSortByFrequency": 0,
+                                        "qSortByNumeric": 0,
+                                        "qSortByAscii": 0,
+                                        "qSortByLoadOrder": 1,
+                                        "qSortByExpression": 0,
+                                        "qExpression": {
+                                            "qv": ""
+                                        }
+                                    },
+                                    {
+                                        "qSortByState": 0,
+                                        "qSortByFrequency": 0,
+                                        "qSortByNumeric": 0,
+                                        "qSortByAscii": 0,
+                                        "qSortByLoadOrder": 1,
+                                        "qSortByExpression": 0,
+                                        "qExpression": {
+                                            "qv": ""
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "qMeasures": 
+                        qMeasuresList,
+                    "qInitialDataFetch": [
+                        {
+                            "qTop": 0,
+                            "qLeft": 0,
+                            "qHeight": 1000,
+                            "qWidth": 10
+                        }
+                    ]
+                }
+            }
+        ],
+        "outKey": -1
+        }
+
+    def DestroySessionObjectDic(self, id):
+        return {
+        "handle": 1,
+        "method": "DestroySessionObject",
+        "params": {
+            "qId": id
+            } 
+        }
+
     def DoSave(self):
         return self.send_request(QSEngineAPIApp.DoSaveDic())
 
@@ -298,6 +424,22 @@ class QSEngineAPIApp(QSEngineAPI):
     def GetLayout(self, handle):
         return self.send_request(QSEngineAPIApp.GetLayoutDic(handle))
 
+    def GetActiveAppHandle(self):
+        result = self.send_request(self.GetActiveAppDic())
+        try: 
+            if result['error']['code'] == 1007:
+                raise Exception('Please refresh the application in your browser')
+        except:
+            return result['result']['qReturn']['qHandle']
+
+    def CreateSessionObject(self, dim, dimLabel, measures):
+        result = self.send_request(self.CreateSessionObjectDic(dim=dim, dimLabel=dimLabel, measure=measures))
+        return result
+
+    def DestroySessionObject(self, id):
+        result = self.send_request(self.DestroySessionObjectDic(id=id))
+        return result
+
     def toPy(self, objectID, qWidth=10, qHeight=1000, return_json=False, verbose=False):
 
         if (qWidth*qHeight > 10000):
@@ -343,6 +485,39 @@ class QSEngineAPIApp(QSEngineAPI):
         else:
             print('Shape (r,c): ' + str(df.shape))
             return df
+
+    def fetchData(self, dim, dimLabel, measures, measureLabels, verbose=False):
+            self.reconnect()
+            self.GetActiveAppHandle() # Used just to instantiate API Doc class
+            sessionObject = self.CreateSessionObject(dim, dimLabel, measures=measures)
+            sessionHandle = sessionObject['result']['qReturn']['qHandle']
+            resultData = self.GetHyperCubeData(sessionHandle)
+
+            columns = [dimLabel]
+            for x in measureLabels:
+                columns.append(x)
+
+            rows = []  # List of dicts containing dimension values
+            for row in resultData['result']['qDataPages'][0]['qMatrix']:  # For every index in qMatrix do...
+                elem = {}
+                for index, col in enumerate(row):
+                    elem[f'{index}'] = col['qNum'] if (col['qNum'] != 'NaN') else col['qText']
+                rows.append(elem)
+
+            df = pd.DataFrame(rows)
+            df.columns = columns
+            self.DestroySessionObject("PTQTempObject") # Purge Session Object
+
+            if (df.empty):  # No measures in object
+                if (verbose):
+                    print(f'No data. Is it empty?')
+                    print('Shape (r,c): ' + str(df.shape))
+                return df
+           
+            else:
+                if (verbose):
+                    print('Shape (r,c): ' + str(df.shape))
+                return df
 
 
 class QSEngineAPICloud:
@@ -486,6 +661,127 @@ class QSEngineAPICloud:
             "id": randint(1,100000)
         }
 
+    def EvaluateDic(self, handle, expression):
+        return {
+            "handle": handle,
+            "method": "Evaluate",
+            "params": {
+                "qExpression": expression
+            },
+            "id": randint(1,100000),
+            "jsonrpc": "2.0"
+        }
+
+    def CreateSessionObjectDic(self, dim, dimLabel, measure):
+        qMeasuresList = []
+        for i in range(len(measure)):
+            qMeasuresList.append({
+                                "qLibraryId": "",
+                                "qSortBy": {
+                                    "qSortByState": 0,
+                                    "qSortByFrequency": 0,
+                                    "qSortByNumeric": 0,
+                                    "qSortByAscii": 0,
+                                    "qSortByLoadOrder": 1,
+                                    "qSortByExpression": 0,
+                                    "qExpression": {
+                                        "qv": ""
+                                    }
+                                },
+                                "qDef": {
+                                    "qLabel": "P2Q",
+                                    "qDescription": "Created using PyToQlik",
+                                    "qTags": [
+                                        "tags"
+                                    ],
+                                    "qGrouping": "N",
+                                    "qDef": measure[i]
+                                },
+                                "qAttributeExpressions": [
+                                    {
+                                        "qExpression": ""
+                                    }
+                                ]
+                            })
+
+        return {
+        "jsonrpc": "2.0",
+        "id": randint(1,100000),
+        "method": "CreateSessionObject",
+        "handle": 1,
+        "params": [
+            {
+                "qInfo": {
+                    "qId": "PTQTempObject",
+                    "qType": "Chart"
+                },
+                "qHyperCubeDef": {
+                    "qStateName": "$",
+                    "qDimensions": [
+                        {
+                            "qLibraryId": "",
+                            "qNullSuppression": False,
+                            "qIncludeElemValue": False,
+                            "qDef": {
+                                "qGrouping": "N",
+                                "qFieldDefs": [
+                                    dim
+                                ],
+                                "qFieldLabels": [
+                                    dimLabel
+                                ],
+                                "qSortCriterias": [
+                                    {
+                                        "qSortByState": 0,
+                                        "qSortByFrequency": 0,
+                                        "qSortByNumeric": 0,
+                                        "qSortByAscii": 0,
+                                        "qSortByLoadOrder": 1,
+                                        "qSortByExpression": 0,
+                                        "qExpression": {
+                                            "qv": ""
+                                        }
+                                    },
+                                    {
+                                        "qSortByState": 0,
+                                        "qSortByFrequency": 0,
+                                        "qSortByNumeric": 0,
+                                        "qSortByAscii": 0,
+                                        "qSortByLoadOrder": 1,
+                                        "qSortByExpression": 0,
+                                        "qExpression": {
+                                            "qv": ""
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "qMeasures": 
+                        qMeasuresList,
+                    "qInitialDataFetch": [
+                        {
+                            "qTop": 0,
+                            "qLeft": 0,
+                            "qHeight": 1000,
+                            "qWidth": 10
+                        }
+                    ]
+                }
+            }
+        ],
+        "outKey": -1
+        }
+
+    def DestroySessionObjectDic(self, id):
+        return {
+        "handle": 1,
+        "method": "DestroySessionObject",
+        "params": {
+            "qId": id
+            } 
+        }
+
     def reconnect(self, verbose=False):
         self.ws.connect(self.tenant + '/app/' + self.CloudId, header=self.auth_header, origin=self.CloudTenant)
         result = self.ws.recv()
@@ -519,7 +815,11 @@ class QSEngineAPICloud:
 
     def GetActiveAppHandle(self):
         result = self.send_request(self.GetActiveAppDic())
-        return result['result']['qReturn']['qHandle']
+        try: 
+            if result['error']['code'] == 1007:
+                raise Exception('Please refresh the application in your browser')
+        except:
+            return result['result']['qReturn']['qHandle']
 
     def GetObject(self, objId, verbose=False):
         result = self.send_request(self.GetObjectDic(objId=objId))
@@ -575,9 +875,21 @@ class QSEngineAPICloud:
             result = self.send_request(self.SetScriptDic(handle=handle, script=newScript))
             return result
 
+    def Evaluate(self, handle, expression):
+        result = self.send_request(self.EvaluateDic(handle=handle, expression=expression))
+        return result
+
+    def CreateSessionObject(self, dim, dimLabel, measures):
+        result = self.send_request(self.CreateSessionObjectDic(dim=dim, dimLabel=dimLabel, measure=measures))
+        return result
+
+    def DestroySessionObject(self, id):
+        result = self.send_request(self.DestroySessionObjectDic(id=id))
+        return result
+    
 
 class Pytoqlik():
-    def __init__(self, host="ws://localhost:4848/app", api_key='', tenant='', appId='', verbose=False, return_json=False):
+    def __init__(self, host="ws://localhost:4848/app", userDirectory='', userId='', connectionType='cert', api_key='', tenant='', appId='', verbose=False, return_json=False):
         self.host = host
         self.tenant = tenant.replace('https://', 'wss://')
         self.key = api_key
@@ -585,22 +897,36 @@ class Pytoqlik():
         self.CloudId = appId
         self.CloudTenant = tenant
 
+        self.isCloud = False
+        self.isEnterprise = False
+
+        # If user has inputted a valid tenant and auth is not empty
         if (self.tenant != 'https://') and (self.auth_header != {'Authorization': 'Bearer '}):
             self.isCloud = True
             self.qsc = QSEngineAPICloud(key=self.key, tenant=self.tenant, appId=self.CloudId, verbose=verbose, return_json=return_json)
+
+        # If user has changed hostname and no cloud auth is provided, start Enterprise
+        if (host != 'ws://localhost:4848/app') and (self.auth_header == {'Authorization': 'Bearer '}):
+            self.isEnterprise = True
+
+            self.ServerUrl = f"wss://{host}/app"
+            ssl.match_hostname = lambda cert, hostname: True  # Checks server-client identity
+
+            self.qse = QSEngineAPI(host=self.ServerUrl, userDirectory=userDirectory, userId=userId, connectionType=connectionType, certs=self.certs)
+            return self.qse
+        
             
     ### IN DEVELOPMENT ###
     def displayIFrame(self):
         url = 'https://redacted-redacted.us.qlikcloud.com/sense/app/5078a285-39f8-4bd1-8b1b-351d6cef77ea/sheet/c44bfc0c-749f-4fcc-8378-c80905b29f18/state/analysis'
         display(IFrame(url, 700, 700))
-        
+
     ### FUNCTIONALITY ###
     def toPy(self, objId, verbose=False):
         if (self.isCloud):
             self.qsc.reconnect(verbose=verbose)
             self.qsc.GetActiveApp(verbose=verbose)
-
-            handle = self.qsc.GetObject(objId, verbose=verbose)['result']['qReturn']['qHandle']
+            handle = self.qsc.GetActiveAppHandle()
             result = self.qsc.GetHCData(handle)
             result2 = self.qsc.GetLayout(handle)
 
@@ -768,7 +1094,7 @@ class Pytoqlik():
             return app
 
     def listApps(self, return_json=False):
-        """Returns a pandas DataFrame containing information about all Qlik Apps in host. KNOWN ISSUES: returns weird results, depending on which app Pytoqlik is referring to + doesnt return all apps"""          
+        """Returns a pandas DataFrame containing information about all Qlik Apps in host. KNOWN ISSUES: might return only currently opened apps (including other users)"""          
 
         if (self.isCloud):
             result = self.qsc.GetDocList()
@@ -804,3 +1130,43 @@ class Pytoqlik():
             appList = pd.DataFrame(tempList, columns = ['App Name', 'App Location', 'File Size'])
             pd.set_option('max_colwidth', 100)
             return appList
+
+    def fetchData(self, dim, dimLabel, measures, measureLabels, verbose=False):
+        """Gets data using the Qlik Engine, similar to toPy, but doesn't require you to pass an actual object. Instead, just pass the dimension and its label, and measures and its labels"""
+
+        if (self.isCloud):
+            self.qsc.reconnect(verbose=verbose)
+            self.qsc.GetActiveAppHandle() # Used just to instantiate API Doc class
+            sessionObject = self.qsc.CreateSessionObject(dim, dimLabel, measures=measures)
+            sessionHandle = sessionObject['result']['qReturn']['qHandle']
+            resultData = self.qsc.GetHCData(sessionHandle)
+
+            columns = [dimLabel]
+            for x in measureLabels:
+                columns.append(x)
+
+            rows = []  # List of dicts containing dimension values
+            for row in resultData['result']['qDataPages'][0]['qMatrix']:  # For every index in qMatrix do...
+                elem = {}
+                for index, col in enumerate(row):
+                    elem[f'{index}'] = col['qNum'] if (col['qNum'] != 'NaN') else col['qText']
+                rows.append(elem)
+
+            df = pd.DataFrame(rows)
+            df.columns = columns
+            self.qsc.DestroySessionObject("PTQTempObject") # Purge Session Object
+
+            if (df.empty):  # No measures in object
+                if (verbose):
+                    print(f'No data. Is it empty?')
+                    print('Shape (r,c): ' + str(df.shape))
+                return df
+           
+            else:
+                if (verbose):
+                    print('Shape (r,c): ' + str(df.shape))
+                return df
+        
+        else:
+            # IS DESKTOPVERSION: runs on QSEngineAPIApp
+            pass
