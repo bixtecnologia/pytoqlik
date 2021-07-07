@@ -10,15 +10,16 @@ PyToQlik is a library that allows you to integrate Qlik Desktop with Jupyter not
 
 # :sparkles: Latest Updates 
 
-
-## 24/jun/2021
-:star2: Just added some basic Qlik Cloud SaaS functionalities! :star2:
-
-
-Be a more powerful :bar_chart: **data scientist** by importing and extracting data from Qlik objects in Cloud applications inside your (:cloud:) tenant! 
+## 03/jul/2021
+:fire: Getting ready for our "v1.0" implementation. New fetchData function allows you to grab data filtered using Qlik's Associative Engine without the need to pass it in an object beforehand.
 
 ## 25/jun/2021
-:exclamation: Major revamp in verbose results and class hierarchy. PyToQlik should be way more stable and reliable! :exclamation:
+Major revamp in verbose results and class hierarchy. PyToQlik should be way more stable and reliable!
+
+## 24/jun/2021
+:star2: Just added Qlik Cloud SaaS support! :star2:
+
+Be a more powerful :bar_chart: **data scientist** by importing and extracting data from Qlik objects in Cloud applications inside your (:cloud:) tenant! 
 
 # Getting Started
 
@@ -80,10 +81,8 @@ A case-study based tutorial has been developed and is available [HERE](docs/PyTo
 
 ## :earth_americas: Connectivity
 - Qlik Enterprise authentication via *.pem* files
-- Qlik Cloud robustness (easy-to-use embedding, more global functionality)
+- Streamlined Qlik Cloud embedding in Colaboratory
 
 ## :bulb: Planned Functionality
-- Data fetching based on dimension and measure names
-- More robust embedding objects and sheets
 - Object creation and manipulation via Python
 - Task creation and managing

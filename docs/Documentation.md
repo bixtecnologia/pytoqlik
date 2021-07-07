@@ -1,3 +1,4 @@
+
 # The PyToQlik Library Documentation
 Hello, welcome the the official PyToQlik Documentation. In here, we will break down the most relevant objects and methods to enable data extraction, data inputting and manipulation from both Qlik Cloud SaaS version and Qlik Desktop version.
 
@@ -8,6 +9,7 @@ Hello, welcome the the official PyToQlik Documentation. In here, we will break d
 - [toPy](#topy)
 - [openApp](#openapp)
 - [listApps](#listapps)
+- [fetchData](#fetchdata)
 
 # Pytoqlik()
 Pytoqlik() instatiates a Python and Qlik connection and allows usage of methods to manipulate, import/export data and effectively control Qlik applications using Python. This is the main object that will be created in most use cases. We recommend storing it in an easy to remember variable such as **p2q**.
@@ -238,6 +240,59 @@ p2q.listApps()
 ```
 
 ------------------------------------------------------------------------------------------
+# fetchData()
+fetchData() is a method called on a Pytoqlik object previously created. This method is similar to the toPy() method in the sense that it extracts data from the application. In contrast to toPy, you don't have to pass an object to fetchData(). You instead pass it some dimension, give it a label, and then you pass a list of measures, and finally a list of measure labels. This method returns you the data filtered using Qlik's Associative Engine inside a *pandas* DataFrame.
+
+### Usage:
+```python
+fetchData(dim, dimLabel, measures=[], measureLabels=[], verbose=False)
+```
+
+### Argument breakdown:
+| **ARGUMENT**  | **DATA TYPE** | **DESCRIPTION**  | **DEFAULT** |
+|---------------|---------------|------------------|-------------|
+|**dim**|string| A string containing the script variable used as a dimension inside an object|**REQUIRED**|
+|**dimLabel**|string|A string containing the name of the dimension selected. Used to name the DataFrame dimension header|**REQUIRED**|
+|**measures**|list of strings|You must pass a list object containing the strings of the measures you want to grab the data from|**EMPTY LIST**|
+|**measureLabels**|list of strings|A list object containing the strings naming your measures. Used in naming the DataFrame headers|**EMPTY LIST**|
+|**verbose**|    boolean    | Whether or not calling this function returns verbose data|False|
+
+### Disclaimer
+This function currently sorts by a single dimension, since multiple dimensions are created inside Qlik as different HyperCubes. To sort this, you might want to call fetchData for all dimensions and concatenate/work with the resulting DataFrames.
+
+Also, since once again, Cloud applications are referenced directly on a Pytoqlik() object, you must call fetchData on a Pytoqlik() object, while Desktop applications you must first open the application using openApp(), then call fetchData on that object, as shown in the examples below.
+
+### Example 1:
+```python
+import pytoqlik
+p2q = pytoqlik.Pytoqlik()
+
+app = p2q.openApp('MyApp', embedded=False)
+
+# "MyApp" has seaborn "flights" data in it
+app.fetchData('year', 
+              'YEAR', 
+              measures=['sum(passengers)', 'avg(passengers)'],
+              measureLabels=['YEAR_TOTAL','YEAR_AVG'])
+# Should return a DataFrame with 3 columns: one is YEAR, one is YEAR_TOTAL containing Qlik data that equals that of "=sum(passengers)" and the last one is YEAR_AVG contaning data equivalent to "=avg(passengers)"
+```
+
+### Example 2 - Cloud:
+```python
+import pytoqlik
+
+key =  'eyJhbGciOiJFUzM4NCIsImtpZCI6IjczZWUwNDgzLTc1NGYtNDc3Yy1hZTQyLTBiMTQyMjNiYzA1YyIsInR5cCI6IkpXVCJ9.eyJzdWJUeXBlIjoidXNlciIsInRlbmFudElkIjoiSlg3bWE2eTRrd0syUHhrQXgzajJKalpMWUZJa2ZibjMiLCJqdGkiOiI3M2VlMDQ4My03NTRmLTQ3N2MtYWU0Mi0wYjE0MjIzYmMwNWMiLCJhdWQiOiJxbGlrLmFwaSIsImlzcyI6InFsaWsuYXBpL2FwaS1rZXlzIiwic3ViIjoieklfR3paeWJqTi1tRUlQVnZxd2ZGUm5jU25DMzhJMTMifQ.W18i31VqtS3WORXfIAouSDAEAuiaLIDy0CvZ-R1t3gv3Hy7B1f9_eyZUyxDefZSnM2Y8t6ZSMWOEjGY0Y9fMWpxxUOc3mgVpJY676Koy24OZUZ-ABx149HKnpbES57m3' 
+tenant =  'https://my-tenant.us.qlikcloud.com/' 
+ID =  '5078a285-39f8-4bd1-8b1b-351d6cef77ea' 
+
+p2q = pytoqlik.Pytoqlik(api_key=key, tenant=url, appId=ID)
+# App has seaborn "flights" data in it
+p2q.fetchData('year', 
+              'YEAR', 
+              measures=['sum(passengers)', 'avg(passengers)'],
+              measureLabels=['YEAR_TOTAL','YEAR_AVG'])
+# Should return a DataFrame with 3 columns: one is YEAR, one is YEAR_TOTAL containing Qlik data that equals that of "=sum(passengers)" and the last one is YEAR_AVG contaning data equivalent to "=avg(passengers)"
+```
 
 
 
